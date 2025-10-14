@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MLXpert - Đăng nhập</title>
-    <!-- Font và icon -->
+    <!-- Font và icon. Sử dụng thư viện ngoài cho font chữ và icon --> 
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"/>
@@ -15,7 +15,7 @@
     />
 
     <!-- Liên kết CSS riêng -->
-    <link rel="stylesheet" href="static\web\css\login.css" />
+    <link rel="stylesheet" href="static\web\css\login.css" /> 
   </head>
 
   <body>
@@ -57,7 +57,7 @@
               name="email"
               placeholder="Nhập email"
               required
-            />
+            /> <!-- ở đây để quy định rằng văn bản được nhập vào ở trường này bắt buộc có định dạng của mail vd: ...gmail.com -->
           </div>
 
           <!-- Trường Mật khẩu -->
@@ -69,15 +69,15 @@
               name="password"
               placeholder="Nhập mật khẩu"
               required
-            />
+            /> <!-- ở đây quy định cho mật khẩu được ẩn thành dạng dấu chấm -->
           </div>
 
           <!-- Ghi nhớ mật khẩu + Quên mật khẩu -->
           <div class="form-options">
             <label class="remember">
               <input type="checkbox" name="remember" /> Ghi nhớ mật khẩu
-            </label>
-            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+            </label> <!-- tick vào để ghi nhớ đăng nhập logic sẽ xử lý sau, hiện tại chưa có -->
+            <a href="#" class="forgot-password">Quên mật khẩu?</a> <!-- ý tưởng ở đây sẽ có 1 phương thức để khôi phục mật khẩu thông qua gmail, nếu phức tạp quá thì có thể bỏ-->
           </div>
 
           <!-- Nút đăng nhập -->
@@ -99,9 +99,10 @@
         </div>
         <div class="footer-right">
           <a href="https://www.facebook.com/"><i class="fa-brands fa-facebook"></i></a>
-          <a href="https://www.youtube.com/"><i class="fa-brands fa-google"></i></a>
+          <a href="https://www.youtube.com/"><i class="fa-brands fa-google"></i></a> <!-- ý tưởng ở đây sẽ là chèn 1 phương thức để khi click vào có thể đi đến trang soạn mail cho địa chỉ mail của leader-->
         </div>
       </div>
     </footer>
   </body>
 </html>
+
