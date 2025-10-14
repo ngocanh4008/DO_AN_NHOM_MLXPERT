@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MLXpert - Đăng nhập</title>
+    <!-- Font và icon -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"/>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Liên kết CSS riêng -->
+    <link rel="stylesheet" href="static\web\css\login.css" />
+  </head>
+
+  <body>
+    <!-- =========================== -->
+    <!-- KHỐI CHỨA TOÀN BỘ GIAO DIỆN -->
+    <!-- =========================== -->
+    <div class="login-container">
+      <!-- ============ CỘT TRÁI ============ -->
+      <div class="login-left">
+        <!-- Logo góc trên -->
+        <div class="logo">
+          <img src="static\web\img\logo_trang.png" alt="MLXpert Logo" />
+        </div>
+        <div class="background">
+          <img src="static\web\img\login.png" alt="background" />
+        </div>
+        <!-- Lời chào -->
+        <div class="welcome-text">
+          <h1>Welcome<br />Back!</h1>
+        </div>
+      </div>
+
+      <!-- ============ CỘT PHẢI ============ -->
+      <div class="login-right">
+        <!-- Tiêu đề form -->
+        <h2 class="form-title">Login</h2>
+        <p class="form-subtitle">
+          Chào mừng trở lại, vui lòng đăng nhập để sử dụng dịch vụ
+        </p>
+
+        <!-- Form đăng nhập -->
+        <form class="login-form" action="#" method="POST">
+          <!-- Trường Email -->
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Nhập email"
+              required
+            />
+          </div>
+
+          <!-- Trường Mật khẩu -->
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Nhập mật khẩu"
+              required
+            />
+          </div>
+
+          <!-- Ghi nhớ mật khẩu + Quên mật khẩu -->
+          <div class="form-options">
+            <label class="remember">
+              <input type="checkbox" name="remember" /> Ghi nhớ mật khẩu
+            </label>
+            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+          </div>
+
+          <!-- Nút đăng nhập -->
+          <button type="submit" class="btn-login">Đăng nhập</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============ PHẦN CHÂN TRANG ============ -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-left">
+          <!-- Logo dưới footer -->
+          <img src="static\web\img\logo_trang.png" alt="MLXpert logo" />
+        </div>
+        <div class="footer-center">
+          <p>Đồ án thuộc về: <strong>MLXpert - K23416</strong></p>
+          <p>Copy right 2025</p>
+        </div>
+        <div class="footer-right">
+          <a href="https://www.facebook.com/"><i class="fa-brands fa-facebook"></i></a>
+          <a href="https://www.youtube.com/"><i class="fa-brands fa-google"></i></a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
