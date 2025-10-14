@@ -1,3 +1,4 @@
+/* Đây là file css cho trang login, mỗi trang khác nhau sẽ có css khác nhau, nếu trang nào có giao diện tương tự thì mới tái sử dụng */
 /* ========== RESET ========== */
 * {
   margin: 0;
@@ -38,13 +39,13 @@ body {
   position: relative;
 }
 
-/* Logo ở góc trên trái */
+/* Logo ở góc trên trái */ 
 .login-left .logo {
   position: absolute;
   top: 20px;
   left: 25px;
 }
-
+/* các chỉ số về width, height,... có thể bật dev mode trên figma để lấy và cop vào */
 .login-left .logo img {
   width: 70px;
   height: 70px;
@@ -75,7 +76,7 @@ body {
 /* ----------- CỘT PHẢI ----------- */
 .login-right {
   flex: 1;
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* mã màu cũng lấy trong figma nè */
   padding: 60px;
   display: flex;
   flex-direction: column;
@@ -222,3 +223,4 @@ input:focus {
     gap: 10px;
   }
 }
+
