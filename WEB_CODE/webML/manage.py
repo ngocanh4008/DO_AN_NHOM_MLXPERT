@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# đây là file dùng để runserver và chạy web với câu lệnh trong terminal: python manage.py runserver
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
@@ -20,3 +21,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
