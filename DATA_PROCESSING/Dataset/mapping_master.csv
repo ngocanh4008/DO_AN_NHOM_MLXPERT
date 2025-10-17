@@ -1,0 +1,37 @@
+﻿variable_name,original_value,encoded_value
+product_group,DEP,0
+product_group,GIA,1
+product_group,PKI,2
+product_group,SAN,3
+product_group,TBL,4
+brand_name,Brand1,0
+brand_name,Brand2,1
+brand_name,Brand3,2
+brand_name,Brand4,3
+price_group,<70,0
+price_group,70<100,1
+price_group,100<200,2
+price_group,200<300,3
+price_group,300<600,4
+price_group,600<900,5
+price_group,>=900,6
+region,KVCA,0
+region,KVMB,1
+region,KVMN,2
+region,KVMT,3
+region,KVMTR,4
+region,KVTN,5
+region,Khác,6
+region,Trung Quốc,7
+urbanization,Khác,0
+urbanization,Nông thôn,1
+urbanization,Nội thành,2
+urbanization,TT hành chính kinh tế,3
+distribution_channel_code,FP,0
+distribution_channel_code,ZF1,1
+distribution_channel_code,ZF2,2
+distribution_channel_code,ZF3,3
+distribution_channel_code,ZF4,4
+distribution_channel_code,ZF5,5
+distribution_channel_code,ZFK,6
+distribution_channel_code,ZSF,7
