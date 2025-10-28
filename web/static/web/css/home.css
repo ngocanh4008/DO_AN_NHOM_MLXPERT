@@ -1,0 +1,64 @@
+/* ============================= */
+/* RESET CƠ BẢN */
+/* ============================= */
+body {
+  margin: 0;
+  font-family: "Lato", sans-serif;
+}
+
+/* ============================= */
+/* SIDEBAR CỐ ĐỊNH BÊN TRÁI */
+/* ============================= */
+.sidebar {
+  margin: 0;
+  padding: 300px 0 0;
+  width: 295px;
+  background: #01203F;
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+}
+
+/* Link trong sidebar */
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  color: white;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.sidebar a img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Hover hiệu ứng */
+.sidebar a:hover:not(.active) {
+  background: rgba(3, 68, 220, 0.60);
+  color: white;
+}
+/* ============================= */
+/* RESPONSIVE CHO MOBILE */
+/* ============================= */
+@media screen and (max-width: 700px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  .sidebar a {
+    float: left;
+  }
+  div.content {
+    margin-left: 0;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .sidebar a {
+    text-align: center;
+    float: none;
+  }
+}
