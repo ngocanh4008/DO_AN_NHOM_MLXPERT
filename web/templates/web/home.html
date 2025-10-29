@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sidebar</title>
+    <link rel="stylesheet" href="{% static 'web/css/home.css' %}" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <a href="#">
+        <img src="{% static 'web/img/ic_bao_cao.png' %}" alt="Báo cáo tổng quan" />
+        <span>Báo cáo tổng quan</span>
+      </a>
+      <a href="#">
+        <img src="{% static 'web/img/ic_du_bao.png' %}" alt="Dự báo nhu cầu" />
+        <span>Dự báo nhu cầu</span>
+      </a>
+      <a href="#">
+        <img src="{% static 'web/img/ic_gia.png' %}" alt="Mô phỏng giá và khuyến mãi" />
+        <span>Mô phỏng giá và khuyến mãi</span>
+      </a>
+      <a href="#">
+        <img src="{% static 'web/img/ic_quan_ly.png' %}" alt="Quản lý báo cáo" />
+        <span>Quản lý báo cáo</span>
+      </a>
+      <a href="#">
+        <img src="{% static 'web/img/ic_khuyen_nghi.png' %}" alt="Khuyến nghị" />
+        <span>Khuyến nghị</span>
+      </a>
+      <a href="#">
+        <img src="{% static 'web/img/ic_dang_xuat.png' %}" alt="Đăng xuất" />
+        <span>Đăng xuất</span>
+      </a>
+    </div>
+  </body>
+</html>
