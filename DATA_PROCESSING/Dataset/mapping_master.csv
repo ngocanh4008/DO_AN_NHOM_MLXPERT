@@ -15,23 +15,3 @@ price_group,200<300,3
 price_group,300<600,4
 price_group,600<900,5
 price_group,>=900,6
-region,KVCA,0
-region,KVMB,1
-region,KVMN,2
-region,KVMT,3
-region,KVMTR,4
-region,KVTN,5
-region,Khác,6
-region,Trung Quốc,7
-urbanization,Khác,0
-urbanization,Nông thôn,1
-urbanization,Nội thành,2
-urbanization,TT hành chính kinh tế,3
-distribution_channel_code,FP,0
-distribution_channel_code,ZF1,1
-distribution_channel_code,ZF2,2
-distribution_channel_code,ZF3,3
-distribution_channel_code,ZF4,4
-distribution_channel_code,ZF5,5
-distribution_channel_code,ZFK,6
-distribution_channel_code,ZSF,7
