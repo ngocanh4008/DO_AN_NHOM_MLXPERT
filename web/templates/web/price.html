@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mô phỏng giá & khuyến mãi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{% static 'web/css/price.css' %}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo-card">
+        <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
+      </div>
+      <nav class="menu">
+        <a class="menu-item" href="{% url 'home' %}"><img src="{% static 'web/img/ic_bao_cao.png' %}"/>   Báo cáo tổng quan</a>
+        <a class="menu-item" href="#"><img src="{% static 'web/img/ic_du_bao.png' %}"/>   Dự báo nhu cầu</a>
+        <a class="menu-item active" href="{% url 'price' %}"><img src="{% static 'web/img/ic_gia.png' %}"/>   Mô phỏng giá và khuyến mãi</a>
+        <a class="menu-item" href="#"><img src="{% static 'web/img/ic_quan_ly.png' %}"/>   Quản lý báo cáo</a>
+        <a class="menu-item" href="{% url 'logout' %}"><img src="{% static 'web/img/ic_dang_xuat.png' %}"/>   Đăng xuất</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="greeter">Xin chào Admin!</div>
+        <button class="download">Tải xuống báo cáo</button>
+      </header>
+
+      <section class="header-block">
+        <h1>MÔ PHỎNG GIÁ & KHUYẾN MÃI</h1>
+        <p>Sản lượng bán & doanh thu dựa trên thay đổi giá và khuyến mãi</p>
+      </section>
+
+      <section class="content">
+        <div class="card form-card">
+          <h2>THÔNG SỐ NHẬP LIỆU</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label>Nhóm sản phẩm</label>
+              <select id="product_group">
+                {% for x in product_groups %}
+                  <option value="{{ x.id }}">{{ x.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Thương hiệu</label>
+              <select id="brand_name">
+                {% for x in brands %}
+                  <option value="{{ x.id }}">{{ x.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Vùng tiêu thụ</label>
+              <select id="region_name">
+                {% for x in regions %}
+                  <option value="{{ x.id }}">{{ x.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Giá bán</label>
+              <input id="net_price" type="number" value="4000000" min="0" step="10000">
+            </div>
+
+            <div class="field">
+              <label>Khuyến mãi: <span id="promo_label">10%</span></label>
+              <!-- yêu cầu: 1% → 50% -->
+              <input id="discount_rate" type="range" min="1" max="50" step="1" value="10" />
+            </div>
+
+            <div class="promo-row">
+              <span>Kích hoạt khuyến mãi</span>
+              <label class="switch">
+                <input id="promo_on" type="checkbox" checked />
+                <span class="slider-btn"></span>
+              </label>
+            </div>
+          </div>
+
+          <button id="run_btn" class="run-btn">CHẠY MÔ PHỎNG</button>
+        </div>
+
+        <div class="right-col">
+          <div class="card result-card">
+            <h2>KẾT QUẢ DỰ ĐOÁN</h2>
+            <ul class="kq">
+              <li>Dự đoán: <b id="kq_sold">—</b> sản phẩm / tuần</li>
+              <li>Doanh thu ước tính: <b id="kq_rev">—</b> đ</li>
+              <li>Lợi nhuận ước tính: <b id="kq_profit">—</b> đ</li>
+              <li>Biên lợi nhuận trung bình: <b id="kq_margin">—</b></li>
+            </ul>
+          </div>
+
+          <div class="card ai-card">
+            <h2>GỢI Ý AI</h2>
+            <div id="ai_text" class="ai-text">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHART ZONE (giữ nguyên phần của m) -->
+      <section id="chart-section">
+        <div class="chart-card">
+          <div class="chart-header"><h3>Biến động theo Giá bán</h3></div>
+          <div class="chart-body" id="chart_main"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><h3>Độ nhạy sản lượng theo Khuyến mãi</h3></div>
+          <div class="chart-body" id="chart_growth"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><h3>Phản ứng vùng miền với Khuyến mãi</h3></div>
+          <div class="chart-body" id="chart_top_regions"></div>
+        </div>
+    </main>
+  </div>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="{% static 'web/js/price.js' %}"></script>
+</body>
+</html>
