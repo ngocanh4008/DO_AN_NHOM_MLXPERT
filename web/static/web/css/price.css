@@ -65,8 +65,8 @@ a{display: none;}
 @media (max-width: 768px){
   .layout{ grid-template-columns: 76px 1fr; }
   .menu-item{ font-size:0; }
-  .menu-item::before{ font-size:18px; color:#fff; }
-  .logo-card { display: none !important; }
+  .menu-item::before{ content:"•"; font-size:18px; color:#fff; }
+  .logo-card{display: none !important}
 }
 /* ====== Chart Section (độc lập) ====== */
 #chart-section{
