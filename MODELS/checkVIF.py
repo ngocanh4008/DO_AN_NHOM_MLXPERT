@@ -241,7 +241,7 @@ if __name__ == "__main__":
         corr_matrix = df[["sold_quantity"] + existing_vars].corr()
         print(corr_matrix)
     else:
-        print("⚠️ Không tìm thấy biến giá nào trong dataframe.")
+        print("Không tìm thấy biến giá nào trong dataframe.")
 
     X, y, cols = select_features(df)
 
@@ -253,13 +253,13 @@ if __name__ == "__main__":
     perfect_pairs = detect_perfect_collinearity(X)
     if perfect_pairs:
         for a, b in perfect_pairs:
-            print(f"⚠️ {a} <--> {b}")
+            print(f"{a} <--> {b}")
     else:
         print("Không phát hiện cặp biến nào có tương quan hoàn hảo.")
 
     print("\n===== GỢI Ý BIẾN NÊN LOẠI BỎ =====")
     drops = suggest_drops(X, vif_df, perfect_pairs)
     if drops:
-        print("🚫 Các biến nên bỏ:", ", ".join(drops))
+        print("Các biến nên bỏ:", ", ".join(drops))
     else:
-        print("✅ Không cần loại bỏ biến nào.")
+        print("Không cần loại bỏ biến nào.")
