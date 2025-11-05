@@ -27,5 +27,6 @@ urlpatterns = [
     path('predict/', views.predict, name='predict'),
     path('price/', views.price_view, name='price'),
     path("simulate_series/", views.simulate_series, name="simulate_series"),
+    path('download_report/', views.download_report, name='download_report'),
     
 ]
