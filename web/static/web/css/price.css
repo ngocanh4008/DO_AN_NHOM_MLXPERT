@@ -22,6 +22,20 @@ html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -app
 .menu-item{ background:transparent; border:none; color:#fff; text-align:left; font-weight:700; font-size:16px; padding:6px 0; cursor:pointer; text-decoration: none;}
 .menu-item.active, .menu-item:hover{ color:var(--orange); }
 /* Main */
+.date-info {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 15px;
+  color: #333;
+}
+.time-card {
+  background: #f8f9fb;
+  border-radius: 8px;
+  padding: 6px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 .main{ background:#fff; display:flex; flex-direction:column; }
 .topbar{ height:40px; background:#E9E9EB; display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 24px; }
 .greeter{ font-size:14px; color:#000; }

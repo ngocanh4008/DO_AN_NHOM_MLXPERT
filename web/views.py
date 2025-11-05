@@ -77,6 +77,31 @@ def price_view(request):
     }
     return render(request, "web/price.html", ctx)
 
+from datetime import datetime, timedelta
+
+@login_required(login_url='login')
+def price_view(request):
+    rows = q("SELECT variable_name, original_value, encoded_value FROM mapping")
+    mapping = {}
+    for var, original, encoded in rows:
+        mapping.setdefault(var, []).append({"id": int(encoded), "name": str(original)})
+
+    # 🔥 Lấy thông tin thời gian hiện tại
+    today = datetime.today()
+    year, week_num, _ = today.isocalendar()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+
+    ctx = {
+        "product_groups": mapping.get("product_group", []),
+        "brands": mapping.get("brand_name", []),
+        "regions": mapping.get("region", []),
+        "today": today.strftime("%d/%m/%Y"),
+        "week_num": week_num,
+        "week_range": f"{start_of_week.strftime('%d/%m')} – {end_of_week.strftime('%d/%m/%Y')}",
+        "year": year,
+    }
+    return render(request, "web/price.html", ctx)
 
 # ================== FEATURE ORDER (V8) ==================
 FEATURES_V8 = [
@@ -348,6 +373,7 @@ def download_report(request):
         ws_sum["B9"].font = Font(bold=True, color="0070C0")
         ws_sum["B9"].alignment = Alignment(wrap_text=True)
 
+        
         # === 2️⃣ PRICE SIMULATION ===
         ws1 = wb.create_sheet("Price Simulation")
         ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
@@ -427,15 +453,26 @@ def download_report(request):
         ws3.add_chart(chart3, "G3")
 
         # ====== Xuất file ======
+        today_str = datetime.today().strftime("%Y%m%d")
+
+        # Lưu workbook vào stream
         stream = BytesIO()
         wb.save(stream)
         stream.seek(0)
+
+        # Tạo response xuất file Excel
         response = HttpResponse(
             stream.getvalue(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        response["Content-Disposition"] = 'attachment; filename="BaoCaoGiaKhuyenMai.xlsx"'
-        return response
 
+        # Tên file có ngày động (chắc chắn thay đổi mỗi lần tải)
+        filename = f"BaoCaoGiaKhuyenMai_{today_str}.xlsx"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        # Ghi log ra console để kiểm tra
+        print(f"[Download] Generated filename: {filename}")
+
+        return response
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
