@@ -1,5 +1,5 @@
 # web/views.py
-from datetime import datetime, date
+from datetime import datetime
 import json
 from django.db import connection
 from django.http import JsonResponse
@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 import joblib
 import numpy as np
 import pandas as pd
@@ -77,7 +78,7 @@ def price_view(request):
     }
     return render(request, "web/price.html", ctx)
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 @login_required(login_url='login')
 def price_view(request):
@@ -143,6 +144,10 @@ def _predict_internal_v8(payload):
 
     # Tuần hiện tại
     week_num = date.today().isocalendar().week
+    # The code you provided is not valid Python code. It seems to be a mix of comments and
+    # a variable name "date" without any assignment or operation. If you have a specific
+    # question or need help with Python code, please provide more context or a complete
+    # code snippet.
 
     # ===== Chuẩn hoá gần giống lúc train =====
     # discount_rate lúc train là tỷ lệ 0..~0.5 → map % UI 0..50 về [0..1]
@@ -476,3 +481,263 @@ def download_report(request):
         return response
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+# du bao 
+# ==============================================================
+# 2️⃣  HÀM HỖ TRỢ LẤY DỮ LIỆU TỪ MySQL
+# ==============================================================
+
+def _fetch_sales_weekly(product_code: str, aggregate_by_month=True):
+    """
+    Truy xuất dữ liệu từ sales_weekly.
+    Nếu aggregate_by_month=True → gộp 4 tuần = 1 tháng.
+    Cho phép truyền product_group (VD: DEP) hoặc product_id cụ thể.
+    """
+    if len(product_code) <= 5:  # ví dụ DEP, BEV, ...
+        base_sql = """
+            SELECT s.week, SUM(s.sold_quantity) AS qty,
+                   AVG(s.lag_1), AVG(s.rolling_mean_4w), AVG(s.growth_rate)
+            FROM sales_weekly s
+            JOIN product p ON s.product_id = p.product_id
+            WHERE p.product_group = %s
+            GROUP BY s.week
+            ORDER BY s.week
+        """
+    else:
+        base_sql = """
+            SELECT week, sold_quantity AS qty, lag_1, rolling_mean_4w, growth_rate
+            FROM sales_weekly
+            WHERE product_id = %s
+            ORDER BY week
+        """
+
+    with connection.cursor() as cur:
+        cur.execute("SET NAMES utf8mb4;")
+        cur.execute(base_sql, [product_code])
+        rows = cur.fetchall()
+
+    if not rows:
+        return {"months": [], "actual": [], "lag1": [], "roll4": [], "growth": []}
+
+    # Ép float để tránh lỗi Decimal
+    rows = [(int(w), float(q or 0), float(l1 or 0), float(r4 or 0), float(g or 0))
+            for (w, q, l1, r4, g) in rows]
+
+    # Gộp dữ liệu theo tháng (mỗi 4 tuần)
+    if aggregate_by_month:
+        months, actual_m, lag1_m, roll4_m, growth_m = [], [], [], [], []
+        month_idx, temp = 1, []
+
+        for i, (w, q, l1, r4, g) in enumerate(rows, start=1):
+            temp.append((q, l1, r4, g))
+            if i % 4 == 0 or i == len(rows):
+                avg_q = sum(x[0] for x in temp) / len(temp)
+                avg_l1 = sum(x[1] for x in temp) / len(temp)
+                avg_r4 = sum(x[2] for x in temp) / len(temp)
+                avg_g = sum(x[3] for x in temp) / len(temp)
+
+                months.append(month_idx)
+                actual_m.append(round(avg_q, 2))
+                lag1_m.append(round(avg_l1, 2))
+                roll4_m.append(round(avg_r4, 2))
+                growth_m.append(round(avg_g, 2))
+
+                temp.clear()
+                month_idx += 1
+
+        return {
+            "months": months,
+            "actual": actual_m,
+            "lag1": lag1_m,
+            "roll4": roll4_m,
+            "growth": growth_m,
+        }
+
+    # Nếu không gộp, trả về theo tuần
+    weeks, actual, lag1, roll4, growth = [], [], [], [], []
+    for w, q, l1, r4, g in rows:
+        weeks.append(int(w))
+        actual.append(float(q))
+        lag1.append(float(l1))
+        roll4.append(float(r4))
+        growth.append(float(g))
+
+    return {"weeks": weeks, "actual": actual, "lag1": lag1, "roll4": roll4, "growth": growth}
+
+
+# ==============================================================
+# 3️⃣  HÀM MÔ HÌNH DỰ BÁO CƠ BẢN (SMA BASELINE)
+# ==============================================================
+
+def _sma_forecast(actual, lag1=None, roll4=None, horizon=6, alpha=0.6):
+    """
+    Dự báo cơ bản: dùng trung bình trượt và giá trị gần nhất.
+    Không cần thư viện ML nặng.
+    """
+    n = len(actual)
+    fitted = []
+    for i in range(n):
+        prev = actual[i-1] if i > 0 else actual[0]
+        window = actual[max(0, i-3):i+1]
+        roll = sum(window)/len(window) if len(window) else prev
+        pred = alpha * prev + (1 - alpha) * roll
+        fitted.append(round(pred, 2))
+
+    # Dự báo tương lai (simple smoothing)
+    future = []
+    last = fitted[-1] if fitted else actual[-1]
+    last_roll = sum(actual[-4:])/4 if len(actual) >= 4 else actual[-1]
+    for _ in range(horizon):
+        pred = alpha * last + (1 - alpha) * last_roll
+        pred = max(pred, 0.0)
+        future.append(round(pred, 2))
+        last = pred
+        last_roll = (last_roll * 3 + pred) / 4
+    return fitted, future
+
+def _mape(y_true, y_pred):
+    eps = 1e-9
+    n = min(len(y_true), len(y_pred))
+    if n == 0:
+        return None
+    s = 0.0
+    c = 0
+    for i in range(n):
+        if y_true[i] == 0:
+            continue
+        s += abs(y_true[i] - y_pred[i]) / max(abs(y_true[i]), eps)
+        c += 1
+    return round(100.0 * s / c, 2) if c > 0 else None
+
+# ==============================================================
+# 4️⃣  API DỰ BÁO NHU CẦU
+# ==============================================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required(login_url='login')
+def api_forecast(request):
+    """
+    API trả dữ liệu dự báo theo horizon (1, 3, 6, 12 tháng tới)
+    + Cơ cấu nhu cầu theo khu vực
+    + Top sản phẩm tăng/giảm (so với trung bình)
+    """
+    try:
+        raw = (request.body or b"").decode("utf-8").strip()
+        payload = json.loads(raw) if raw else {}
+
+        horizon = int(payload.get("horizon", 3))
+        product_id = payload.get("product_id")
+        region_filter = payload.get("region")
+
+        # ======================================================
+        # 1️⃣ Nếu không truyền product_id → chọn sản phẩm top
+        # ======================================================
+        if not product_id or product_id.upper() == "ALL":
+            with connection.cursor() as cur:
+                cur.execute("""
+                    SELECT product_id
+                    FROM sales
+                    GROUP BY product_id
+                    ORDER BY SUM(sold_quantity) DESC
+                    LIMIT 1
+                """)
+                row = cur.fetchone()
+                if not row:
+                    return JsonResponse({"ok": False, "error": "Không có dữ liệu sales"}, status=404)
+                product_id = row[0]
+
+        # ======================================================
+        # 2️⃣ Lấy dữ liệu lịch sử (theo tháng)
+        # ======================================================
+        series = _fetch_sales_weekly(product_id, aggregate_by_month=True)
+        months = series.get("months") or series.get("weeks")
+        actual = series["actual"]
+        lag1 = series["lag1"]
+        roll4 = series["roll4"]
+
+        if not months:
+            return JsonResponse({"ok": False, "error": f"Không có dữ liệu cho product_id={product_id}"}, status=404)
+
+        # ======================================================
+        # 3️⃣ Dự báo bằng SMA
+        # ======================================================
+        fitted, future = _sma_forecast(actual, lag1, roll4, horizon=horizon, alpha=0.6)
+
+        # Nhãn tháng tương lai
+        last_m = months[-1]
+        future_months = [last_m + i for i in range(1, horizon + 1)]
+
+        # KPI
+        hist_tail = actual[-horizon:] if len(actual) >= horizon else actual
+        fit_tail = fitted[-len(hist_tail):]
+        mape = _mape(hist_tail, fit_tail)
+        sum_future = round(float(sum(future)), 2)
+        avg_future = round(float(sum_future / max(horizon, 1)), 2)
+        kpis = {
+            "sum_forecast": sum_future,
+            "avg_forecast": avg_future,
+            "mape_tail": mape
+        }
+
+        # ======================================================
+        # 4️⃣ Cơ cấu nhu cầu theo khu vực (DỮ LIỆU THẬT)
+        # ======================================================
+        with connection.cursor() as cur:
+            sql_region = """
+                SELECT m.original_value AS region, SUM(s.sold_quantity)
+                FROM sales s
+                JOIN mapping m
+                    ON s.distribution_channel_code_enc = m.encoded_value
+                   AND m.variable_name = 'region'
+                GROUP BY m.original_value
+                ORDER BY SUM(s.sold_quantity) DESC
+            """
+            cur.execute(sql_region)
+            rows = cur.fetchall()
+        region_labels = [r[0] for r in rows]
+        region_values = [float(r[1]) for r in rows]
+
+        # ======================================================
+        # 5️⃣ Top sản phẩm tăng/giảm (DỮ LIỆU THẬT)
+        # ======================================================
+        with connection.cursor() as cur:
+            sql_top = """
+                SELECT p.product_group,
+                       AVG(s.sold_quantity) AS avg_sales,
+                       (AVG(s.sold_quantity) - 
+                        (SELECT AVG(s2.sold_quantity) FROM sales s2)) / 
+                        (SELECT AVG(s2.sold_quantity) FROM sales s2) * 100 AS pct_change
+                FROM sales s
+                JOIN product p ON s.product_id = p.product_id
+                GROUP BY p.product_group
+                ORDER BY pct_change DESC
+                LIMIT 5
+            """
+            cur.execute(sql_top)
+            rows_top = cur.fetchall()
+
+        top_labels = [r[0] for r in rows_top]
+        top_changes = [round(float(r[2]), 2) for r in rows_top]
+
+        # ======================================================
+        # 6️⃣ Trả JSON đầy đủ cho frontend
+        # ======================================================
+        return JsonResponse({
+            "ok": True,
+            "product_id": product_id,
+            "labels_hist": months,
+            "actual": actual,
+            "fitted": [round(x, 2) for x in fitted],
+            "labels_future": future_months,
+            "forecast": [round(x, 2) for x in future],
+            "kpis": kpis,
+            "region_labels": region_labels,
+            "region_data": region_values,
+            "top_labels": top_labels,
+            "top_changes": top_changes
+        })
+
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    

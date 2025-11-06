@@ -6,4 +6,5 @@ urlpatterns = [
     path('', views.login,),
     path('home', views.home),
     path('price', views.price_page),
+    path('forecast', views.forecast_page),
 ]
