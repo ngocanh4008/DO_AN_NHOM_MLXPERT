@@ -30,7 +30,7 @@ async function runPredict() {
     promo_on: $("#promo_on").checked,
   };
 
-  const res = await fetch("/predict/", {
+  const res = await fetch("/api/predict/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -63,7 +63,7 @@ async function runPredict() {
   };
 
   // ===== Gọi /predict chính =====
-  const res = await fetch("/predict/", {
+  const res = await fetch("/api/predict/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -85,7 +85,7 @@ async function runPredict() {
 async function getSmartSuggestion(payload) {
   try {
     // ---- A. Quét theo giá ----
-    const resPrice = await fetch("/simulate_series/", {
+    const resPrice = await fetch("/api/simulate_series/", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, mode: "price" }),
     });
@@ -93,7 +93,7 @@ async function getSmartSuggestion(payload) {
     const bestPrice = priceData.series.reduce((a, b) => (a.profit > b.profit ? a : b));
 
     // ---- B. Quét theo khuyến mãi ----
-    const resDisc = await fetch("/simulate_series/", {
+    const resDisc = await fetch("/api/simulate_series/", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, mode: "discount" }),
     });
@@ -101,7 +101,7 @@ async function getSmartSuggestion(payload) {
     const bestDisc = discData.series.reduce((a, b) => (a.profit > b.profit ? a : b));
 
     // ---- C. Quét theo vùng ----
-    const resRegion = await fetch("/simulate_series/", {
+    const resRegion = await fetch("/api/simulate_series/", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, mode: "region" }),
     });
@@ -138,7 +138,7 @@ async function drawDiscountChart() {
     promo_on: $("#promo_on").checked,
   };
 
-  const res = await fetch("/simulate_series/", {
+  const res = await fetch("/api/simulate_series/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -198,7 +198,7 @@ async function drawRegionChart() {
     mode: "region"
   };
 
-  const res = await fetch("/simulate_series/", {
+  const res = await fetch("/api/simulate_series/", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
@@ -232,7 +232,7 @@ async function drawPriceChart() {
     mode: "price"
   };
 
-  const res = await fetch("/simulate_series/", {
+  const res = await fetch("/api/simulate_series/", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
@@ -302,7 +302,7 @@ async function downloadReport() {
     promo_on: $("#promo_on").checked,
   };
 
-  const res = await fetch("/download_report/", {
+  const res = await fetch("/api/download_report/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)

@@ -12,6 +12,6 @@ urlpatterns = [
     # === API ROUTES ===
     path('api/forecast/', views.api_forecast, name='api_forecast'),
     path('api/predict/', views.predict, name='predict'),
-    path('api/simulate/', views.simulate_series, name='simulate_series'),
+    path('api/simulate_series/', views.simulate_series, name='simulate_series'),
     path('api/download/', views.download_report, name='download_report'),
 ]
