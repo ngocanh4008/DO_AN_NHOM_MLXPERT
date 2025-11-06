@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'mlxpert_retail',        # Tên database
         'USER': 'root',                 # Tài khoản
-        'PASSWORD': '@Obama123',
+        'PASSWORD': 'PkHbr@2f3oOtRH9O4!Cu',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {'charset': 'utf8mb4'},

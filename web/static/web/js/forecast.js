@@ -65,6 +65,7 @@ function getHorizon() {
 // Gọi API Dự báo
 // =======================================================
 async function runForecast() {
+    
   try {
     const payload = {
       product_id: getSelectedProductId(),
@@ -84,6 +85,17 @@ async function runForecast() {
 
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Lỗi không xác định");
+    
+    if (data.top_strongest) {
+        const nameEl = document.getElementById("top-strongest-name");
+        const trendEl = document.getElementById("top-strongest-trend");
+        
+        if (nameEl) nameEl.textContent = data.top_strongest;
+        if (trendEl) {
+            trendEl.textContent = data.trend === "tăng" ? "↑ xu hướng tăng" : "↓ xu hướng giảm";
+            trendEl.style.color = data.trend === "tăng" ? "#16a34a" : "#dc2626";
+        }
+    }
 
     // Cập nhật KPI
     updateKPI(data);
@@ -136,11 +148,24 @@ function exportResult() {
 // =======================================================
 function updateKPI(data) {
   const k = data.kpis || {};
-  $("#kpi-qty").textContent = fmtInt(Math.round(k.avg_forecast || 0));
-  $("#kpi-revenue").textContent = fmtInt(Math.round(k.sum_forecast || 0));
-  $("#kpi-mape").textContent = k.mape_tail != null ? k.mape_tail + "%" : "—";
-  $("#kpi-top").textContent = data.product_id || "—";
+
+  const elRev = document.querySelector("#kpi-revenue");
+  const elQty = document.querySelector("#kpi-qty");
+  const elMape = document.querySelector("#kpi-mape");
+  const elTop = document.querySelector("#kpi-top");
+
+  // Nếu phần tử chưa tồn tại → không làm gì cả
+  if (!elRev || !elQty || !elMape || !elTop) {
+    console.warn("⚠️ Không tìm thấy phần tử KPI trong DOM");
+    return;
+  }
+
+  elRev.textContent = k.sum_forecast != null ? fmtInt(Math.round(k.sum_forecast)) : "—";
+  elQty.textContent = k.avg_forecast != null ? fmtInt(Math.round(k.avg_forecast)) : "—";
+  elMape.textContent = k.mape_tail != null ? k.mape_tail + "%" : "—";
+  elTop.textContent = data.top_strongest || data.product_id || "—";
 }
+
 
 // =======================================================
 // Biểu đồ chính: Actual - Fitted - Forecast
