@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'livereload.middleware.LiveReloadScript'
+    #'livereload.middleware.LiveReloadScript'
 ]
 
 ROOT_URLCONF = 'webML.urls'
@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'mlxpert_retail',        # Tên database
         'USER': 'root',                 # Tài khoản
-        'PASSWORD': '@Obama123',
+        'PASSWORD': 'Khanhdu@123',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {'charset': 'utf8mb4'},

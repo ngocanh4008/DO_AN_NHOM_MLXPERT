@@ -1,0 +1,295 @@
+/* Kế thừa và định nghĩa các biến màu sắc */
+:root{
+  --blue:#01203F;
+  --orange:#FD7132;
+  --gray:#D9D9D9;
+  --soft:#FFFDF2;
+  --text:#01203F;
+  --link-blue: #085195; /* Màu link Báo cáo 1 */
+  --active-page-blue: #1890FF; /* Màu trang phân trang active */
+  --back-button-blue: #002479; /* Màu nút Back */
+  --header-bg: #E9E9EB;
+  --radius:12px;
+  --gap:16px;
+  --shadow:0 2px 10px rgba(0,0,0,.06);
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -apple-system, Arial, sans-serif; color:var(--text); }
+
+/* ============================= */
+/* LAYOUT CHUNG (Kế thừa từ price.css) */
+/* ============================= */
+.layout{ display:grid; grid-template-columns: 295px 1fr; min-height:100vh; }
+
+/* Sidebar */
+.sidebar{ background:var(--blue); color:#fff; padding:16px 20px; position:sticky; top:0; height:100vh; display:flex; flex-direction:column; justify-content: space-between; gap:20px; }
+
+.logo-card{ width:200px; height:200px; border-radius:var(--radius); margin: 10px auto 0; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); overflow:hidden; }
+
+/* Thay thế logo card bằng logo text theo thiết kế Figma */
+.logo-text{ font-size: 36px; font-weight: 700; padding: 20px 0; text-align: center; margin-bottom: 20px;}
+.logo-text span:first-child{ color: #fff; }
+.logo-text span:last-child{ color: var(--orange); }
+
+.menu{ margin-top:20px; display:flex; flex-direction:column; gap:14px; text-decoration: none; }
+.menu-item{ 
+    background:transparent; border:none; color:#fff; text-align:left; 
+    font-weight:700; font-size:16px; padding:8px 0; cursor:pointer; 
+    text-decoration: none; display: flex; align-items: center; gap: 20px;
+    transition: background 0.2s;
+}
+.menu-item img { width: 24px; height: 24px; }
+
+/* Quản lý báo cáo (Active) có font-size 21px và màu cam */
+.menu-item.active{ 
+    color:var(--orange); 
+    font-size: 21px; 
+    padding: 10px 0;
+    position: relative;
+}
+.menu-item.active::before { /* Đường kẻ cam bên trái */
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--orange);
+    border-radius: 0 4px 4px 0;
+}
+.menu-item:hover{ background-color: rgba(255, 255, 255, 0.05); }
+
+/* Đăng xuất */
+.logout-item {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 20px;
+}
+.logout-item img { width: 32px; height: 32px; }
+
+/* Main */
+.main{ background:#fff; display:flex; flex-direction:column; }
+.topbar{ height:40px; background:var(--header-bg); display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 24px; }
+.greeter{ font-size:14px; color:#000; font-family: "Inter Medium"; }
+.profile-placeholder { width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 1px solid #ccc; }
+
+.header-block{ padding:24px 24px 0 24px; }
+.header-block h1{ font-size:36px; margin:0; font-weight:700; color:var(--blue); }
+
+
+/* ============================= */
+/* REPORT CONTENT SPECIFIC STYLES */
+/* ============================= */
+
+.report-content {
+    padding: 24px 24px 32px 24px;
+}
+
+/* Back Button & Filters */
+.action-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.back-button {
+    background: var(--back-button-blue);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    height: 48px;
+    transition: background 0.2s;
+}
+.back-button:hover { background: #001f68; }
+
+.filters {
+    display: flex;
+    gap: 16px;
+}
+
+.dropdown-filter {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: 700;
+    min-width: 150px;
+    height: 48px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Search Bar */
+.search-container {
+    margin-bottom: 30px;
+    position: relative;
+    width: 70%;
+}
+.search-container input {
+    width: 100%;
+    padding: 12px 12px 12px 40px; /* Thêm padding trái cho icon */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+.search-container .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #888;
+}
+
+/* Report Table */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: var(--shadow);
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.report-table thead {
+    background: #F7F7F8;
+    color: #555;
+}
+.report-table th, .report-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+.report-table th {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.report-table td {
+    font-size: 14px;
+    color: #000;
+}
+
+/* STT (Serial Number) Circle */
+.stt-cell {
+    width: 30px;
+    text-align: center;
+}
+.stt-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: var(--blue); /* Theo thiết kế Figma */
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+.stt-circle.active-stt {
+    background-color: #555; /* Ví dụ: màu tối cho các STT khác */
+}
+
+/* Tên báo cáo link */
+.report-link {
+    color: var(--link-blue);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.report-link:hover { text-decoration: underline; }
+
+/* Action Buttons */
+.action-buttons button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+.action-buttons button:hover { color: var(--link-blue); }
+.action-buttons button.delete:hover { color: #f00; }
+.action-buttons svg { width: 18px; height: 18px; display: inline-block; }
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 20px 0;
+    gap: 8px;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.page-btn:hover:not(.active) { background: #f0f0f0; }
+
+.page-btn.active {
+    background: var(--active-page-blue);
+    color: #fff;
+    border-color: var(--active-page-blue);
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 1200px){
+  .layout{ grid-template-columns: 76px 1fr; }
+  .menu-item span{ display:none; }
+  .menu-item img { margin-left: 12px; }
+  .menu-item.active::before { left: 0; }
+  .logout-item span{ display:none; }
+  .logout-item img { margin-left: 12px; }
+}
+
+@media (max-width: 768px){
+    .action-filter-bar { flex-direction: column; align-items: flex-start; }
+    .filters { flex-wrap: wrap; }
+    .dropdown-filter { min-width: 120px; }
+    .search-container { width: 100%; }
+    .report-table, .report-table thead, .report-table tbody, .report-table th, .report-table td, .report-table tr { 
+        display: block; 
+        width: 100%;
+    }
+    .report-table thead { display: none; }
+    .report-table tr { border-bottom: 2px solid #ddd; margin-bottom: 10px; }
+    .report-table td { 
+        text-align: right; 
+        padding-left: 50%;
+        position: relative;
+    }
+    .report-table td::before { 
+        content: attr(data-label); 
+        position: absolute;
+        left: 15px;
+        width: calc(50% - 30px);
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: #555;
+    }
+}

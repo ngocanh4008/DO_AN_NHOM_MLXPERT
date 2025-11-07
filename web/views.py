@@ -1,4 +1,3 @@
-# web/views.py
 from datetime import datetime
 import json
 from django.db import connection
@@ -43,20 +42,18 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-# ================== MODEL LOAD ==================
-BASE_DIR = Path(__file__).resolve().parent.parent
-# 👉 đổi sang model v7 softmono
-MODEL_PATH = BASE_DIR / "web" / "ml_model" / "xgboost_model_v7_softmono.pkl"
-model = joblib.load(MODEL_PATH)
-
-# ================== DB Helper ==================
-def q(sql):
-    with connection.cursor() as cur:
-        cur.execute("SET NAMES utf8mb4;")
-        cur.execute(sql)
-        return cur.fetchall()
-
 # ================== PAGE ==================
+
+@login_required(login_url='login')
+def report_view(request):
+    """
+    Trang Quản lý báo cáo.
+    Sử dụng template web/report.html
+    """
+    # Hiện tại chưa cần truyền context gì đặc biệt, chỉ render template
+    return render(request, 'web/report.html')
+
+
 @login_required(login_url='login')
 def price_view(request):
     """
@@ -73,6 +70,20 @@ def price_view(request):
         "regions": mapping.get("region", []),
     }
     return render(request, "web/price.html", ctx)
+
+
+# ================== MODEL LOAD ==================
+BASE_DIR = Path(__file__).resolve().parent.parent
+# 👉 đổi sang model v7 softmono
+MODEL_PATH = BASE_DIR / "web" / "ml_model" / "xgboost_model_v7_softmono.pkl"
+model = joblib.load(MODEL_PATH)
+
+# ================== DB Helper ==================
+def q(sql):
+    with connection.cursor() as cur:
+        cur.execute("SET NAMES utf8mb4;")
+        cur.execute(sql)
+        return cur.fetchall()
 
 # ================== API ==================
 @csrf_exempt
