@@ -803,6 +803,12 @@ def api_forecast(request):
 
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@login_required(login_url='login')
 def report_view(request):
-    """ Trang Quản lý báo cáo. Sử dụng template web/report.html """
-    return render(request, 'web/report.html')
+    """
+    Hàm này sẽ render template report.html.
+    Template này nằm trong web/templates/web/report.html
+    """
+    context = {} # Bạn có thể thêm dữ liệu để truyền cho template ở đây
+    return render(request, 'web/report.html', context)

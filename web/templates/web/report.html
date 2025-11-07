@@ -4,11 +4,8 @@
     <meta charset="UTF-8" />
     <title>Quản Lý Báo Cáo - MLXPERT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Liên kết đến file CSS mới -->
     <link rel="stylesheet" href="{% static 'web/css/report.css' %}" />
-    <!-- Simple JavaScript for embedded SVG icons -->
     <script>
-        // Hàm này giúp tạo SVG icons cho các nút hành động (Tải xuống, Xóa, Tìm kiếm, v.v.)
         function Icon(name, size = 20, color = 'currentColor', stroke = 2) {
             const icons = {
                 Download: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
@@ -16,9 +13,8 @@
                 ChevronDown: `<polyline points="6 9 12 15 18 9"/>`,
                 Search: `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
                 ArrowLeft: `<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>`,
-                // Menu icons are handled by image tags in the sidebar
+                ArrowRight: `<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>`
             };
-
             const svgContent = icons[name] || '';
             return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${svgContent}</svg>`;
         }
@@ -27,48 +23,28 @@
 <body>
     <div class="layout">
         <aside class="sidebar">
-            <div>
-                <!-- Logo Text theo thiết kế -->
-                <div class="logo-text">
-                    <span>ML</span><span class="text-orange">XPERT</span>
-                </div>
-
-                <!-- Menu -->
-                <nav class="menu">
-                    <!-- Các icon này sử dụng đường dẫn {% static ... %} của bạn -->
-                    <a class="menu-item" href="#">
-                        <img src="{% static 'web/img/ic_bao_cao.png' %}" alt="Báo cáo tổng quan" />
-                        <span>Báo cáo tổng quan</span>
-                    </a>
-                    <a class="menu-item" href="#">
-                        <img src="{% static 'web/img/ic_du_bao.png' %}" alt="Dự báo nhu cầu" />
-                        <span>Dự báo nhu cầu</span>
-                    </a>
-                    <a class="menu-item" href="#">
-                        <img src="{% static 'web/img/ic_gia.png' %}" alt="Mô phỏng giá và khuyến mãi" />
-                        <span>Mô phỏng giá và khuyến mãi</span>
-                    </a>
-                    <!-- Menu item ACTIVE -->
-                    <a class="menu-item active" href="#">
-                        <img src="{% static 'web/img/ic_quan_ly.png' %}" alt="Quản lý báo cáo" />
-                        <span>Quản lý báo cáo</span>
-                    </a>
-                    <a class="menu-item" href="#">
-                        <img src="{% static 'web/img/ic_khuyen_nghi.png' %}" alt="Khuyến nghị" />
-                        <span>Khuyến nghị</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Đăng xuất -->
-            <a class="menu-item logout-item" href="#" >
-                <img src="{% static 'web/img/ic_dang_xuat.png' %}" alt="Đăng xuất" />
-                <span>Đăng xuất</span>
-            </a>
-        </aside>
-
+              <div class="logo-card">
+                <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
+              </div>
+              <nav class="menu">
+                <a class="menu-item" href="{% url 'home' %}">
+                  <img src="{% static 'web/img/ic_bao_cao.png' %}"/> Báo cáo tổng quan
+                </a>
+                <a class="menu-item" href="#">
+                  <img src="{% static 'web/img/ic_du_bao.png' %}"/> Dự báo nhu cầu
+                </a>
+                <a class="menu-item" href="#">
+                  <img src="{% static 'web/img/ic_gia.png' %}"/> Mô phỏng giá & khuyến mãi
+                </a>
+                <a class="menu-item active" href="#">
+                  <img src="{% static 'web/img/ic_quan_ly.png' %}"/> Quản lý báo cáo
+                </a>
+                <a class="menu-item" href="{% url 'logout' %}">
+                  <img src="{% static 'web/img/ic_dang_xuat.png' %}"/> Đăng xuất
+                </a>
+              </nav>
+            </aside>
         <main class="main">
-            <!-- Topbar (Giống price.html) -->
             <header class="topbar">
                 <div class="greeter">Xin chào Admin!</div>
                 <div class="profile-placeholder"></div>
@@ -78,43 +54,35 @@
                 <h1>QUẢN LÝ BÁO CÁO</h1>
             </section>
 
-            <!-- Nội dung chính của trang Quản lý báo cáo -->
             <section class="report-content">
-
-                <!-- Thanh Tìm kiếm -->
                 <div class="search-container">
-                    <div class="search-icon">
-                        <script>document.write(Icon('Search', 20, '#888'))</script>
-                    </div>
-                    <input type="text" placeholder="Tìm kiếm báo cáo..." />
+                    <div class="search-icon"><script>document.write(Icon('Search', 20, '#888'))</script></div>
+                    <input id="search_input" type="text" placeholder="Tìm kiếm báo cáo..." />
                 </div>
 
-                <!-- Nút Back và Bộ lọc -->
                 <div class="action-filter-bar">
-                    <!-- Nút Back -->
-                    <a class="back-button" href="#">
-                        <script>document.write(Icon('ArrowLeft', 20, 'white', 3))</script>
-                        <span>Back</span>
-                    </a>
-
-                    <!-- Các Bộ lọc -->
                     <div class="filters">
-                        <div class="dropdown-filter">
+
+                        <div class="dropdown-filter" data-filter="time">
                             <span>Thời gian</span>
+                            <select></select>
                             <script>document.write(Icon('ChevronDown', 16, '#000'))</script>
                         </div>
-                        <div class="dropdown-filter">
+
+                        <div class="dropdown-filter" data-filter="type">
                             <span>Loại</span>
+                            <select></select>
                             <script>document.write(Icon('ChevronDown', 16, '#000'))</script>
                         </div>
-                        <div class="dropdown-filter">
+
+                        <div class="dropdown-filter" data-filter="creator">
                             <span>Người tạo</span>
+                            <input type="text" placeholder="Nhập tên" id="creator_input" />
                             <script>document.write(Icon('ChevronDown', 16, '#000'))</script>
                         </div>
                     </div>
                 </div>
 
-                <!-- Bảng Danh sách Báo cáo -->
                 <table class="report-table">
                     <thead>
                         <tr>
@@ -127,70 +95,15 @@
                             <th>Hành động</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Dữ liệu mẫu (10 dòng) -->
-                        <script>
-                            const reportData = [
-                                { stt: 1, name: "Báo cáo 1", type: "Dự báo nhu cầu", creator: "Admin", date: "10/10/2025", size: "32 KB" },
-                                { stt: 2, name: "Báo cáo 2", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 3, name: "Báo cáo 3", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 4, name: "Báo cáo 4", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 5, name: "Báo cáo 5", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 6, name: "Báo cáo 6", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 7, name: "Báo cáo 7", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 8, name: "Báo cáo 8", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 9, name: "Báo cáo 9", type: "10", creator: "10", date: "10", size: "10" },
-                                { stt: 10, name: "Báo cáo 10", type: "10", creator: "10", date: "10", size: "10" },
-                            ];
-
-                            reportData.forEach( (item, index) => {
-                                const sttClass = item.stt === 1 ? 'stt-circle' : 'stt-circle active-stt';
-                                document.write(`
-                                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                                        <td class="stt-cell" data-label="STT"><div class="${sttClass}">${item.stt}</div></td>
-                                        <td data-label="Tên báo cáo"><a href="#" class="report-link">${item.name}</a></td>
-                                        <td data-label="Loại báo cáo">${item.type}</td>
-                                        <td data-label="Người tạo">${item.creator}</td>
-                                        <td data-label="Ngày tạo">${item.date}</td>
-                                        <td data-label="Kích thước tệp">${item.size}</td>
-                                        <td data-label="Hành động" class="action-buttons">
-                                            <!-- Tải xuống -->
-                                            <button onclick="console.log('Download: ${item.name}')">
-                                                <script>document.write(Icon('Download', 18, 'currentColor'))</script>
-                                            </button>
-                                            <!-- Xóa -->
-                                            <button class="delete" onclick="console.log('Delete: ${item.name}')">
-                                                <script>document.write(Icon('Trash', 18, 'currentColor'))</script>
-                                            </button>
-                                        </td>
-                                    </tr>
-                        </script>
-
-                    </tbody>
+                    <tbody id="report_table_body">
+                        </tbody>
                 </table>
 
-                <!-- Phân trang -->
-                <div class="pagination">
-                    <!-- Nút Previous -->
-                    <button class="page-btn">
-                        <script>document.write(Icon('ArrowLeft', 14, '#000', 3))</script>
-                    </button>
-
-                    <!-- Các nút trang -->
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <button class="page-btn">4</button>
-                    <button class="page-btn">5</button>
-
-                    <!-- Nút Next -->
-                    <button class="page-btn">
-                        <script>document.write(Icon('ArrowLeft', 14, '#000', 3).replace('ArrowLeft', 'ArrowRight'))</script>
-                    </button>
-                </div>
+                <div id="pagination_container" class="pagination"></div>
 
             </section>
         </main>
     </div>
+    <script src="{% static 'web/js/report.js' %}"></script>
 </body>
 </html>
