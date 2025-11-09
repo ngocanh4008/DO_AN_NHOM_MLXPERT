@@ -17,7 +17,13 @@ from io import BytesIO
 import openpyxl
 from pathlib import Path
 from math import log1p
-
+from .models import ReportDownloadHistory
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from io import BytesIO
 
 def login_view(request):
     # Nếu user đã đăng nhập, chuyển đến home
@@ -296,6 +302,167 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
+def create_excel_content(payload, wb):
+    payload.setdefault("region_enc", 0)
+    payload.setdefault("product_group_enc", 0)
+    payload.setdefault("brand_name_enc", 0)
+    payload.setdefault("net_price", 4_000_000.0)
+    payload.setdefault("discount_rate", 20.0)
+    payload.setdefault("promo_on", True)
+
+    # ========== Vùng mô phỏng ==========
+    series_price = []
+    series_discount = []
+    series_region = []
+
+    # Giá bán ±30%
+    base_price = float(payload["net_price"])
+    for i in range(-6, 7):
+        p = base_price * (1 + i * 0.05)
+        y = _predict_internal_v8({**payload, "net_price": p})
+        series_price.append({"x": p, **y})
+
+    # Khuyến mãi 0..50%
+    for d in range(0, 55, 5):
+        y = _predict_internal_v8({**payload, "discount_rate": d, "promo_on": True})
+        series_discount.append({"x": d, **y})
+
+    # 7 vùng
+    for r in range(7):
+        y = _predict_internal_v8({**payload, "region_enc": r})
+        series_region.append({"x": r, **y})
+
+    region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
+
+    # ======= Tìm điểm tối ưu =======
+    best_price = max(series_price, key=lambda x: x["profit"])
+    best_discount = max(series_discount, key=lambda x: x["profit"])
+    best_region = max(series_region, key=lambda x: x["profit"])
+
+    # ======= Tạo Excel =======
+    ws_sum = wb.active
+    ws_sum.title = "Summary"
+
+    # --- style cơ bản ---
+    bold = Font(bold=True, size=12)
+    header_fill = PatternFill("solid", fgColor="C5D9F1")
+    thin = Side(border_style="thin", color="000000")
+    border = Border(top=thin, left=thin, right=thin, bottom=thin)
+    money_fmt = "#,##0₫"
+
+    # === 1️⃣ Sheet SUMMARY ===
+    ws_sum.column_dimensions["A"].width = 40
+    ws_sum.column_dimensions["B"].width = 28
+
+    ws_sum.append(["HẠNG MỤC", "GIÁ TRỊ"])
+    for cell in ws_sum[1]:
+        cell.font = bold
+        cell.fill = header_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal="center")
+
+    summary_rows = [
+        ["Giá bán tối ưu (VND)", round(best_price["x"], 0)],
+        ["Khuyến mãi tối ưu (%)", best_discount["x"]],
+        ["Vùng lợi nhuận cao nhất", region_names[best_region["x"]]],
+        ["Lợi nhuận tối đa (VND)", best_discount["profit"]],
+        ["Doanh thu tối đa (VND)", best_discount["revenue"]],
+        ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]],
+    ]
+    for row in summary_rows:
+        ws_sum.append(row)
+        for c in ws_sum[ws_sum.max_row]:
+            c.border = border
+        if isinstance(row[1], (int, float)):
+            ws_sum.cell(ws_sum.max_row, 2).number_format = money_fmt
+
+    ws_sum.append([])
+    ws_sum.append([
+        "📈 Gợi ý AI",
+        f"Áp dụng giá {round(best_price['x'], 0):,.0f}đ, khuyến mãi {best_discount['x']}% tại {region_names[best_region['x']]} "
+        f"để đạt lợi nhuận tối đa {best_discount['profit']:,.0f}đ/tuần."])
+    ws_sum["A9"].font = Font(bold=True, color="0070C0")
+    ws_sum["B9"].font = Font(bold=True, color="0070C0")
+    ws_sum["B9"].alignment = Alignment(wrap_text=True)
+
+    # === 2️⃣ PRICE SIMULATION ===
+    ws1 = wb.create_sheet("Price Simulation")
+    ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+    for c in ws1[1]:
+        c.font = bold
+        c.fill = header_fill
+        c.border = border
+    for r in series_price:
+        ws1.append([round(r["x"], 0), r["sold"], r["revenue"], r["profit"]])
+    for row in ws1.iter_rows(min_row=2, max_col=4):
+        for c in row:
+            c.border = border
+            if c.col_idx >= 3:
+                c.number_format = money_fmt
+
+    chart1 = LineChart()
+    chart1.title = "Biến động Doanh thu & Lợi nhuận theo Giá bán"
+    chart1.y_axis.title = "Giá trị (VND)"
+    chart1.x_axis.title = "Giá bán (VND)"
+    data = Reference(ws1, min_col=2, max_col=4, min_row=1, max_row=ws1.max_row)
+    cats = Reference(ws1, min_col=1, min_row=2, max_row=ws1.max_row)
+    chart1.add_data(data, titles_from_data=True)
+    chart1.set_categories(cats)
+    ws1.add_chart(chart1, "G3")
+
+    # === 3️⃣ DISCOUNT SIMULATION ===
+    ws2 = wb.create_sheet("Discount Simulation")
+    ws2.append(["Mức giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+    for c in ws2[1]:
+        c.font = bold
+        c.fill = header_fill
+        c.border = border
+    for r in series_discount:
+        ws2.append([r["x"], r["sold"], r["revenue"], r["profit"]])
+    for row in ws2.iter_rows(min_row=2, max_col=4):
+        for c in row:
+            c.border = border
+            if c.col_idx >= 3:
+                c.number_format = money_fmt
+
+    chart2 = LineChart()
+    chart2.title = "Ảnh hưởng của Mức Khuyến mãi"
+    chart2.y_axis.title = "Giá trị (VND)"
+    chart2.x_axis.title = "Mức giảm giá (%)"
+    data = Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=ws2.max_row)
+    cats = Reference(ws2, min_col=1, min_row=2, max_row=ws2.max_row)
+    chart2.add_data(data, titles_from_data=True)
+    chart2.set_categories(cats)
+    ws2.add_chart(chart2, "G3")
+
+    # === 4️⃣ REGION SIMULATION ===
+    ws3 = wb.create_sheet("Region Simulation")
+    ws3.append(["Vùng", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+    for c in ws3[1]:
+        c.font = bold
+        c.fill = header_fill
+        c.border = border
+    for r in series_region:
+        label = region_names[r["x"]] if 0 <= r["x"] < len(region_names) else "?"
+        ws3.append([label, r["sold"], r["revenue"], r["profit"]])
+    for row in ws3.iter_rows(min_row=2, max_col=4):
+        for c in row:
+            c.border = border
+            if c.col_idx >= 3:
+                c.number_format = money_fmt
+
+    chart3 = BarChart()
+    chart3.title = "So sánh Sản lượng theo Vùng"
+    chart3.y_axis.title = "Sản lượng (sp/tuần)"
+    chart3.x_axis.title = "Vùng"
+    data = Reference(ws3, min_col=2, max_col=2, min_row=1, max_row=ws3.max_row)
+    cats = Reference(ws3, min_col=1, min_row=2, max_row=ws3.max_row)
+    chart3.add_data(data, titles_from_data=True)
+    chart3.set_categories(cats)
+    chart3.height = 10
+    chart3.width = 20
+    ws3.add_chart(chart3, "G3")
+    pass
 
 @csrf_exempt
 @login_required(login_url='login')
@@ -308,161 +475,164 @@ def download_report(request):
         payload.setdefault("net_price", 4_000_000.0)
         payload.setdefault("discount_rate", 20.0)
         payload.setdefault("promo_on", True)
-
-        # ========== Vùng mô phỏng ==========
-        series_price = []
-        series_discount = []
-        series_region = []
-
-        # Giá bán ±30%
-        base_price = float(payload["net_price"])
-        for i in range(-6, 7):
-            p = base_price * (1 + i * 0.05)
-            y = _predict_internal_v8({**payload, "net_price": p})
-            series_price.append({"x": p, **y})
-
-        # Khuyến mãi 0..50%
-        for d in range(0, 55, 5):
-            y = _predict_internal_v8({**payload, "discount_rate": d, "promo_on": True})
-            series_discount.append({"x": d, **y})
-
-        # 7 vùng
-        for r in range(7):
-            y = _predict_internal_v8({**payload, "region_enc": r})
-            series_region.append({"x": r, **y})
-
-        region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
-
-        # ======= Tìm điểm tối ưu =======
-        best_price = max(series_price, key=lambda x: x["profit"])
-        best_discount = max(series_discount, key=lambda x: x["profit"])
-        best_region = max(series_region, key=lambda x: x["profit"])
-
+        #KDU ĐIỀU CHỈNH HÀM
+        # # ========== Vùng mô phỏng ==========
+        # series_price = []
+        # series_discount = []
+        # series_region = []
+        #
+        # # Giá bán ±30%
+        # base_price = float(payload["net_price"])
+        # for i in range(-6, 7):
+        #     p = base_price * (1 + i * 0.05)
+        #     y = _predict_internal_v8({**payload, "net_price": p})
+        #     series_price.append({"x": p, **y})
+        #
+        # # Khuyến mãi 0..50%
+        # for d in range(0, 55, 5):
+        #     y = _predict_internal_v8({**payload, "discount_rate": d, "promo_on": True})
+        #     series_discount.append({"x": d, **y})
+        #
+        # # 7 vùng
+        # for r in range(7):
+        #     y = _predict_internal_v8({**payload, "region_enc": r})
+        #     series_region.append({"x": r, **y})
+        #
+        # region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
+        #
+        # # ======= Tìm điểm tối ưu =======
+        # best_price = max(series_price, key=lambda x: x["profit"])
+        # best_discount = max(series_discount, key=lambda x: x["profit"])
+        # best_region = max(series_region, key=lambda x: x["profit"])
+        #
+        # # ======= Tạo Excel =======
+        # wb = openpyxl.Workbook()
+        # ws_sum = wb.active
+        # ws_sum.title = "Summary"
+        #
+        # # --- style cơ bản ---
+        # bold = Font(bold=True, size=12)
+        # header_fill = PatternFill("solid", fgColor="C5D9F1")
+        # thin = Side(border_style="thin", color="000000")
+        # border = Border(top=thin, left=thin, right=thin, bottom=thin)
+        # money_fmt = "#,##0₫"
+        #
+        # # === 1️⃣ Sheet SUMMARY ===
+        # ws_sum.column_dimensions["A"].width = 40
+        # ws_sum.column_dimensions["B"].width = 28
+        #
+        # ws_sum.append(["HẠNG MỤC", "GIÁ TRỊ"])
+        # for cell in ws_sum[1]:
+        #     cell.font = bold
+        #     cell.fill = header_fill
+        #     cell.border = border
+        #     cell.alignment = Alignment(horizontal="center")
+        #
+        # summary_rows = [
+        #     ["Giá bán tối ưu (VND)", round(best_price["x"], 0)],
+        #     ["Khuyến mãi tối ưu (%)", best_discount["x"]],
+        #     ["Vùng lợi nhuận cao nhất", region_names[best_region["x"]]],
+        #     ["Lợi nhuận tối đa (VND)", best_discount["profit"]],
+        #     ["Doanh thu tối đa (VND)", best_discount["revenue"]],
+        #     ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]],
+        # ]
+        # for row in summary_rows:
+        #     ws_sum.append(row)
+        #     for c in ws_sum[ws_sum.max_row]:
+        #         c.border = border
+        #     if isinstance(row[1], (int, float)):
+        #         ws_sum.cell(ws_sum.max_row, 2).number_format = money_fmt
+        #
+        # ws_sum.append([])
+        # ws_sum.append([
+        #     "📈 Gợi ý AI",
+        #     f"Áp dụng giá {round(best_price['x'], 0):,.0f}đ, khuyến mãi {best_discount['x']}% tại {region_names[best_region['x']]} "
+        #     f"để đạt lợi nhuận tối đa {best_discount['profit']:,.0f}đ/tuần."
+        # ])
+        # ws_sum["A9"].font = Font(bold=True, color="0070C0")
+        # ws_sum["B9"].font = Font(bold=True, color="0070C0")
+        # ws_sum["B9"].alignment = Alignment(wrap_text=True)
+        #
+        # # === 2️⃣ PRICE SIMULATION ===
+        # ws1 = wb.create_sheet("Price Simulation")
+        # ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+        # for c in ws1[1]:
+        #     c.font = bold
+        #     c.fill = header_fill
+        #     c.border = border
+        # for r in series_price:
+        #     ws1.append([round(r["x"], 0), r["sold"], r["revenue"], r["profit"]])
+        # for row in ws1.iter_rows(min_row=2, max_col=4):
+        #     for c in row:
+        #         c.border = border
+        #         if c.col_idx >= 3:
+        #             c.number_format = money_fmt
+        #
+        # chart1 = LineChart()
+        # chart1.title = "Biến động Doanh thu & Lợi nhuận theo Giá bán"
+        # chart1.y_axis.title = "Giá trị (VND)"
+        # chart1.x_axis.title = "Giá bán (VND)"
+        # data = Reference(ws1, min_col=2, max_col=4, min_row=1, max_row=ws1.max_row)
+        # cats = Reference(ws1, min_col=1, min_row=2, max_row=ws1.max_row)
+        # chart1.add_data(data, titles_from_data=True)
+        # chart1.set_categories(cats)
+        # ws1.add_chart(chart1, "G3")
+        #
+        # # === 3️⃣ DISCOUNT SIMULATION ===
+        # ws2 = wb.create_sheet("Discount Simulation")
+        # ws2.append(["Mức giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+        # for c in ws2[1]:
+        #     c.font = bold
+        #     c.fill = header_fill
+        #     c.border = border
+        # for r in series_discount:
+        #     ws2.append([r["x"], r["sold"], r["revenue"], r["profit"]])
+        # for row in ws2.iter_rows(min_row=2, max_col=4):
+        #     for c in row:
+        #         c.border = border
+        #         if c.col_idx >= 3:
+        #             c.number_format = money_fmt
+        #
+        # chart2 = LineChart()
+        # chart2.title = "Ảnh hưởng của Mức Khuyến mãi"
+        # chart2.y_axis.title = "Giá trị (VND)"
+        # chart2.x_axis.title = "Mức giảm giá (%)"
+        # data = Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=ws2.max_row)
+        # cats = Reference(ws2, min_col=1, min_row=2, max_row=ws2.max_row)
+        # chart2.add_data(data, titles_from_data=True)
+        # chart2.set_categories(cats)
+        # ws2.add_chart(chart2, "G3")
+        #
+        # # === 4️⃣ REGION SIMULATION ===
+        # ws3 = wb.create_sheet("Region Simulation")
+        # ws3.append(["Vùng", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+        # for c in ws3[1]:
+        #     c.font = bold
+        #     c.fill = header_fill
+        #     c.border = border
+        # for r in series_region:
+        #     label = region_names[r["x"]] if 0 <= r["x"] < len(region_names) else "?"
+        #     ws3.append([label, r["sold"], r["revenue"], r["profit"]])
+        # for row in ws3.iter_rows(min_row=2, max_col=4):
+        #     for c in row:
+        #         c.border = border
+        #         if c.col_idx >= 3:
+        #             c.number_format = money_fmt
+        #
+        # chart3 = BarChart()
+        # chart3.title = "So sánh Sản lượng theo Vùng"
+        # chart3.y_axis.title = "Sản lượng (sp/tuần)"
+        # chart3.x_axis.title = "Vùng"
+        # data = Reference(ws3, min_col=2, max_col=2, min_row=1, max_row=ws3.max_row)
+        # cats = Reference(ws3, min_col=1, min_row=2, max_row=ws3.max_row)
+        # chart3.add_data(data, titles_from_data=True)
+        # chart3.set_categories(cats)
+        # chart3.height = 10
+        # chart3.width = 20
+        # ws3.add_chart(chart3, "G3")
         # ======= Tạo Excel =======
         wb = openpyxl.Workbook()
-        ws_sum = wb.active
-        ws_sum.title = "Summary"
-
-        # --- style cơ bản ---
-        bold = Font(bold=True, size=12)
-        header_fill = PatternFill("solid", fgColor="C5D9F1")
-        thin = Side(border_style="thin", color="000000")
-        border = Border(top=thin, left=thin, right=thin, bottom=thin)
-        money_fmt = "#,##0₫"
-
-        # === 1️⃣ Sheet SUMMARY ===
-        ws_sum.column_dimensions["A"].width = 40
-        ws_sum.column_dimensions["B"].width = 28
-
-        ws_sum.append(["HẠNG MỤC", "GIÁ TRỊ"])
-        for cell in ws_sum[1]:
-            cell.font = bold
-            cell.fill = header_fill
-            cell.border = border
-            cell.alignment = Alignment(horizontal="center")
-
-        summary_rows = [
-            ["Giá bán tối ưu (VND)", round(best_price["x"], 0)],
-            ["Khuyến mãi tối ưu (%)", best_discount["x"]],
-            ["Vùng lợi nhuận cao nhất", region_names[best_region["x"]]],
-            ["Lợi nhuận tối đa (VND)", best_discount["profit"]],
-            ["Doanh thu tối đa (VND)", best_discount["revenue"]],
-            ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]],
-        ]
-        for row in summary_rows:
-            ws_sum.append(row)
-            for c in ws_sum[ws_sum.max_row]:
-                c.border = border
-            if isinstance(row[1], (int, float)):
-                ws_sum.cell(ws_sum.max_row, 2).number_format = money_fmt
-
-        ws_sum.append([])
-        ws_sum.append([
-            "📈 Gợi ý AI",
-            f"Áp dụng giá {round(best_price['x'], 0):,.0f}đ, khuyến mãi {best_discount['x']}% tại {region_names[best_region['x']]} "
-            f"để đạt lợi nhuận tối đa {best_discount['profit']:,.0f}đ/tuần."
-        ])
-        ws_sum["A9"].font = Font(bold=True, color="0070C0")
-        ws_sum["B9"].font = Font(bold=True, color="0070C0")
-        ws_sum["B9"].alignment = Alignment(wrap_text=True)
-
-        # === 2️⃣ PRICE SIMULATION ===
-        ws1 = wb.create_sheet("Price Simulation")
-        ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        for c in ws1[1]:
-            c.font = bold
-            c.fill = header_fill
-            c.border = border
-        for r in series_price:
-            ws1.append([round(r["x"], 0), r["sold"], r["revenue"], r["profit"]])
-        for row in ws1.iter_rows(min_row=2, max_col=4):
-            for c in row:
-                c.border = border
-                if c.col_idx >= 3:
-                    c.number_format = money_fmt
-
-        chart1 = LineChart()
-        chart1.title = "Biến động Doanh thu & Lợi nhuận theo Giá bán"
-        chart1.y_axis.title = "Giá trị (VND)"
-        chart1.x_axis.title = "Giá bán (VND)"
-        data = Reference(ws1, min_col=2, max_col=4, min_row=1, max_row=ws1.max_row)
-        cats = Reference(ws1, min_col=1, min_row=2, max_row=ws1.max_row)
-        chart1.add_data(data, titles_from_data=True)
-        chart1.set_categories(cats)
-        ws1.add_chart(chart1, "G3")
-
-        # === 3️⃣ DISCOUNT SIMULATION ===
-        ws2 = wb.create_sheet("Discount Simulation")
-        ws2.append(["Mức giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        for c in ws2[1]:
-            c.font = bold
-            c.fill = header_fill
-            c.border = border
-        for r in series_discount:
-            ws2.append([r["x"], r["sold"], r["revenue"], r["profit"]])
-        for row in ws2.iter_rows(min_row=2, max_col=4):
-            for c in row:
-                c.border = border
-                if c.col_idx >= 3:
-                    c.number_format = money_fmt
-
-        chart2 = LineChart()
-        chart2.title = "Ảnh hưởng của Mức Khuyến mãi"
-        chart2.y_axis.title = "Giá trị (VND)"
-        chart2.x_axis.title = "Mức giảm giá (%)"
-        data = Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=ws2.max_row)
-        cats = Reference(ws2, min_col=1, min_row=2, max_row=ws2.max_row)
-        chart2.add_data(data, titles_from_data=True)
-        chart2.set_categories(cats)
-        ws2.add_chart(chart2, "G3")
-
-        # === 4️⃣ REGION SIMULATION ===
-        ws3 = wb.create_sheet("Region Simulation")
-        ws3.append(["Vùng", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        for c in ws3[1]:
-            c.font = bold
-            c.fill = header_fill
-            c.border = border
-        for r in series_region:
-            label = region_names[r["x"]] if 0 <= r["x"] < len(region_names) else "?"
-            ws3.append([label, r["sold"], r["revenue"], r["profit"]])
-        for row in ws3.iter_rows(min_row=2, max_col=4):
-            for c in row:
-                c.border = border
-                if c.col_idx >= 3:
-                    c.number_format = money_fmt
-
-        chart3 = BarChart()
-        chart3.title = "So sánh Sản lượng theo Vùng"
-        chart3.y_axis.title = "Sản lượng (sp/tuần)"
-        chart3.x_axis.title = "Vùng"
-        data = Reference(ws3, min_col=2, max_col=2, min_row=1, max_row=ws3.max_row)
-        cats = Reference(ws3, min_col=1, min_row=2, max_row=ws3.max_row)
-        chart3.add_data(data, titles_from_data=True)
-        chart3.set_categories(cats)
-        chart3.height = 10
-        chart3.width = 20
-        ws3.add_chart(chart3, "G3")
+        create_excel_content(payload, wb)
 
         # ====== Xuất file ======
         today_str = datetime.today().strftime("%Y%m%d")
@@ -481,6 +651,19 @@ def download_report(request):
         # Tên file có ngày động (chắc chắn thay đổi mỗi lần tải)
         filename = f"BaoCaoGiaKhuyenMai_{today_str}.xlsx"
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        #---KDU bổ sung---
+        file_size_kb = len(stream.getvalue()) / 1024
+        ReportDownloadHistory.objects.create(
+            user=request.user,
+            payload={
+                "type": "Mô phỏng giá và khuyến mãi",
+                "params": payload,
+            },
+            filename=filename,
+            file_size_kb=file_size_kb
+        )
+        #------
 
         # Ghi log ra console để kiểm tra
         print(f"[Download] Generated filename: {filename}")
@@ -812,3 +995,114 @@ def report_view(request):
     """
     context = {} # Bạn có thể thêm dữ liệu để truyền cho template ở đây
     return render(request, 'web/report.html', context)
+
+
+@api_view(['GET'])
+def api_reports(request):
+    # Lấy query params
+    search = request.GET.get('search', '').lower()
+    report_type = request.GET.get('type', 'all')
+    creator = request.GET.get('creator', '').lower()
+    time_filter = request.GET.get('time', 'all')
+    page = int(request.GET.get('page', 1))
+    page_size = int(request.GET.get('pageSize', 5))
+
+    reports = ReportDownloadHistory.objects.all().select_related('user')
+
+    # Filter
+    if search:
+        reports = reports.filter(filename__icontains=search) | reports.filter(user__username__icontains=search)
+    if report_type != 'all':
+        reports = reports.filter(payload__type=report_type)
+    if creator:
+        reports = reports.filter(user__username__icontains=creator)
+
+    # Time filter
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    if time_filter != 'all':
+        delta = {
+            'today': 0,
+            '3_days': 3,
+            '7_days': 7,
+            '30_days': 30,
+            '90_days': 90,
+            '1_year': 365
+        }.get(time_filter, 0)
+        if delta == 0:  # today
+            reports = reports.filter(created_at__date=now.date())
+        else:
+            reports = reports.filter(created_at__gte=now - timedelta(days=delta))
+
+    # Pagination
+    total = reports.count()
+    total_pages = (total + page_size - 1) // page_size
+    start = (page - 1) * page_size
+    end = start + page_size
+    reports = reports[start:end]
+
+    # Response
+    data = []
+    for r in reports:
+        data.append({
+            'id': r.id,
+            'name': r.filename,
+            'type': r.payload.get('type', 'Khác'),
+            'creator': r.user.username,
+            'date': r.created_at.strftime('%d/%m/%Y'),
+            'size': f"{r.file_size_kb:.2f} KB"
+        })
+    return Response({
+        'reports': data,
+        'currentPage': page,
+        'totalPages': total_pages
+    })
+def download_history_view(request):
+    history = ReportDownloadHistory.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'reports/history.html', {'history': history})
+
+@api_view(['DELETE'])
+@login_required(login_url='login')
+def api_delete_report(request, report_id):
+    try:
+        report = ReportDownloadHistory.objects.get(id=report_id)
+        report.delete()
+        return Response({"ok": True}, status=204)
+
+    except ReportDownloadHistory.DoesNotExist:
+        return Response({"ok": False,"error": "Không tìm thấy báo cáo ID này."}, status=404)
+
+    except Exception as e:
+        return Response({"ok": False,"error": f"Lỗi server không xác định: {str(e)}"}, status=500)
+
+@api_view(['GET'])
+@login_required(login_url='login')
+def api_redownload_report(request, report_id):
+    try:
+        report = ReportDownloadHistory.objects.get(id=report_id, user=request.user)
+
+        # Lấy tham số mô phỏng gốc đã lưu trong DB
+        params = report.payload.get('params', {})
+
+        wb = openpyxl.Workbook()
+
+        create_excel_content(params, wb)
+
+        # Lưu Workbook vào stream
+        file_stream = BytesIO()
+        wb.save(file_stream)
+        file_stream.seek(0)
+
+        # Trả về response, dùng tên file đã lưu trong DB
+        response = HttpResponse(
+            file_stream.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = f'attachment; filename="{report.filename}"'
+
+        return response
+
+    except ReportDownloadHistory.DoesNotExist:
+        return Response({"error": "Không tìm thấy báo cáo hoặc bạn không có quyền truy cập."}, status=404)
+    except Exception as e:
+        return Response({"error": f"Lỗi tái tạo báo cáo: {str(e)}"}, status=500)

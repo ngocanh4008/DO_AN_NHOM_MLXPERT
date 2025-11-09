@@ -27,5 +27,9 @@ urlpatterns = [
     path('predict/', views.predict, name='predict'),
     path('price/', views.price_view, name='price'),
     path('report/', views.report_view, name='report'),
-    path("simulate_series/", views.simulate_series, name="simulate_series")
+    path("simulate_series/", views.simulate_series, name="simulate_series"),
+    path('api/reports', views.api_reports, name='api_reports'),
+    path('api/download_report/', views.download_report, name='download_report'),
+    path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
+    path('reports/redownload/<int:report_id>', views.api_redownload_report, name='api_redownload_report'),
 ]
