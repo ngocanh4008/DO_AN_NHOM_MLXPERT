@@ -7,6 +7,7 @@ urlpatterns = [
     path('home', views.home),
     path('price', views.price_view),
     path('report/', views.report_view, name='report'),
+    path('overview/', views.overview_view, name='overview'),
     path('api/reports', views.api_reports, name='api_reports'),
     path('api/download_report/', views.download_report, name='download_report'),
     path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
