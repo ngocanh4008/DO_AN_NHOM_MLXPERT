@@ -24,6 +24,12 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from io import BytesIO
+import json
+import traceback
+from datetime import datetime
+from decimal import Decimal
+from django.http import JsonResponse, HttpResponse
+
 
 def login_view(request):
     # Nếu user đã đăng nhập, chuyển đến home
@@ -1106,3 +1112,260 @@ def api_redownload_report(request, report_id):
         return Response({"error": "Không tìm thấy báo cáo hoặc bạn không có quyền truy cập."}, status=404)
     except Exception as e:
         return Response({"error": f"Lỗi tái tạo báo cáo: {str(e)}"}, status=500)
+    
+
+    # web/views.py
+# ==============================================================
+# Helper
+# ==============================================================
+def _to_float(x):
+    if x is None:
+        return 0.0
+    if isinstance(x, Decimal):
+        return float(x)
+    try:
+        return float(x)
+    except Exception:
+        return 0.0
+
+
+# ==============================================================
+# 1. RENDER OVERVIEW PAGE (dropdowns)
+# ==============================================================
+@login_required(login_url='login')
+def overview_view(request):
+    with connection.cursor() as cur:
+        cur.execute("SET NAMES utf8mb4;")
+        cur.execute("""
+            SELECT DISTINCT product_group
+            FROM product
+            WHERE product_group IS NOT NULL
+            ORDER BY product_group
+        """)
+        products = [row[0] for row in cur.fetchall()]
+
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT original_value
+            FROM mapping
+            WHERE variable_name = 'region'
+            ORDER BY encoded_value
+        """)
+        regions = [row[0] for row in cur.fetchall()]
+
+    ctx = {
+        "products": products,
+        "regions": regions
+    }
+    return render(request, "web/overview.html", ctx)
+
+
+# ==============================================================
+# 2. API OVERVIEW
+# ==============================================================
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required(login_url='login')
+def api_overview(request):
+    try:
+        region = (request.GET.get("region") or "ALL").strip()
+        product = (request.GET.get("product") or "ALL").strip()
+
+        # ----------------------------------------------------------
+        # MAIN TABLE (region x product_group)
+        # ----------------------------------------------------------
+        with connection.cursor() as cur:
+            cur.execute("SET NAMES utf8mb4;")
+            sql = """
+                SELECT
+                    COALESCE(m.original_value, 'Unknown') AS region_name,
+                    COALESCE(p.product_group, 'Unknown') AS product_group,
+                    SUM(s.sold_quantity) AS total_qty,
+                    SUM(s.revenue)       AS total_rev,
+                    SUM(s.cost_price)    AS total_cost,
+                    SUM(s.profit)        AS total_profit
+                FROM sales s
+                LEFT JOIN product p ON s.product_id = p.product_id
+                LEFT JOIN mapping m
+                  ON m.encoded_value = s.distribution_channel_code_enc
+                 AND m.variable_name = 'region'
+                WHERE (%s = 'ALL' OR m.original_value = %s)
+                  AND (%s = 'ALL' OR p.product_group = %s)
+                GROUP BY COALESCE(m.original_value, 'Unknown'),
+                         COALESCE(p.product_group, 'Unknown')
+                HAVING SUM(s.sold_quantity) > 0
+                ORDER BY total_rev DESC
+                LIMIT 2000;
+            """
+            cur.execute(sql, [region, region, product, product])
+            rows = cur.fetchall()
+
+        result_rows = []
+        for r in rows:
+            region_name, product_group, qty, rev, cost, profit = r
+            qty = _to_float(qty)
+            rev = _to_float(rev)
+            cost = _to_float(cost)
+            profit = _to_float(profit)
+            pct = round(100 * profit / rev, 2) if rev else 0
+            result_rows.append({
+                "region": region_name,
+                "product": product_group,
+                "quantity": qty,
+                "revenue": rev,
+                "cost": cost,
+                "profit": profit,
+                "profit_pct": pct,
+            })
+
+        # ----------------------------------------------------------
+        # TIME SERIES (revenue + profit)
+        # ----------------------------------------------------------
+        with connection.cursor() as cur:
+            sql_time = """
+                SELECT year_num, month_num,
+                       SUM(revenue) AS rev,
+                       SUM(profit)  AS profit
+                FROM sales s
+                LEFT JOIN product p ON s.product_id = p.product_id
+                WHERE (%s = 'ALL' OR p.product_group = %s)
+                GROUP BY year_num, month_num
+                ORDER BY year_num, month_num
+            """
+            cur.execute(sql_time, [product, product])
+            trows = cur.fetchall()
+
+        labels, rev_series, profit_series = [], [], []
+        for yr, mo, rev, profit in trows:
+            if yr is None or mo is None:
+                continue
+            labels.append(f"{int(yr)}-{int(mo):02d}")
+            rev_series.append(_to_float(rev))
+            profit_series.append(_to_float(profit))
+
+        # ----------------------------------------------------------
+        # NEW: CHART PRODUCT BY CATEGORY (not top 5)
+        # ----------------------------------------------------------
+        with connection.cursor() as cur:
+            sql_cat = """
+                SELECT COALESCE(p.product_group, 'Unknown') AS grp,
+                       SUM(s.revenue) AS total_rev
+                FROM sales s
+                LEFT JOIN product p ON s.product_id = p.product_id
+                WHERE (%s = 'ALL' OR p.product_group = %s)
+                GROUP BY COALESCE(p.product_group, 'Unknown')
+                ORDER BY total_rev DESC
+            """
+            cur.execute(sql_cat, [product, product])
+            cat_rows = cur.fetchall()
+
+        product_cat_labels = [r[0] for r in cat_rows]
+        product_cat_values = [_to_float(r[1]) for r in cat_rows]
+
+        # ----------------------------------------------------------
+        # TOP 5 PRODUCTS (actual products)
+        # ----------------------------------------------------------
+        with connection.cursor() as cur:
+            sql_top = """
+                SELECT p.product_id, SUM(s.revenue) AS total_rev
+                FROM sales s
+                LEFT JOIN product p ON s.product_id = p.product_id
+                WHERE (%s = 'ALL' OR p.product_group = %s)
+                GROUP BY p.product_id
+                ORDER BY total_rev DESC
+                LIMIT 5
+            """
+            cur.execute(sql_top, [product, product])
+            top_rows = cur.fetchall()
+
+        top_labels = [r[0] for r in top_rows]
+        top_values = [_to_float(r[1]) for r in top_rows]
+
+        # ----------------------------------------------------------
+        # KPIs
+        # ----------------------------------------------------------
+        total_rev = sum(x["revenue"] for x in result_rows) if result_rows else sum(rev_series)
+        total_cost = sum(x["cost"] for x in result_rows) if result_rows else 0
+        total_profit = sum(x["profit"] for x in result_rows) if result_rows else sum(profit_series)
+        pct = round(100 * total_profit / total_rev, 2) if total_rev else 0
+
+        kpis = {
+            "revenue": round(total_rev, 2),
+            "cost": round(total_cost, 2),
+            "profit": round(total_profit, 2),
+            "profit_pct": pct
+        }
+
+        return JsonResponse({
+            "ok": True,
+            "data": result_rows,
+            "time": {
+                "labels": labels,
+                "revenue": rev_series,
+                "profit": profit_series
+            },
+            "product_category": {
+                "labels": product_cat_labels,
+                "values": product_cat_values
+            },
+            "top5": {
+                "labels": top_labels,
+                "values": top_values
+            },
+            "kpis": kpis
+        })
+
+    except Exception as e:
+        print("❌ Lỗi API OVERVIEW:\n", traceback.format_exc())
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+
+# ==============================================================
+# 3. DOWNLOAD OVERVIEW
+# ==============================================================
+@csrf_exempt
+@login_required(login_url='login')
+def download_overview(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        product = (payload.get("product") or "ALL").strip()
+        region = (payload.get("region") or "ALL").strip()
+
+        with connection.cursor() as cur:
+            cur.execute("SET NAMES utf8mb4;")
+            cur.execute("""
+                SELECT COALESCE(m.original_value,'Unknown'),
+                       COALESCE(p.product_group,'Unknown'),
+                       SUM(s.revenue),
+                       SUM(s.profit)
+                FROM sales s
+                LEFT JOIN product p ON s.product_id = p.product_id
+                LEFT JOIN mapping m
+                  ON m.encoded_value = s.distribution_channel_code_enc
+                 AND m.variable_name = 'region'
+                WHERE (%s='ALL' OR m.original_value=%s)
+                  AND (%s='ALL' OR p.product_group=%s)
+                GROUP BY COALESCE(m.original_value,'Unknown'),
+                         COALESCE(p.product_group,'Unknown')
+                ORDER BY SUM(s.revenue) DESC
+                LIMIT 500
+            """, [region, region, product, product])
+            rows = cur.fetchall()
+
+        # CSV
+        import io, csv
+        buf = io.StringIO()
+        wr = csv.writer(buf)
+        wr.writerow(["Region", "Product Group", "Revenue", "Profit"])
+        for r in rows:
+            wr.writerow([r[0], r[1], _to_float(r[2]), _to_float(r[3])])
+        csv_bytes = buf.getvalue().encode("utf-8-sig")
+
+        fname = f"overview_{datetime.now().strftime('%Y%m%d')}.csv"
+        resp = HttpResponse(csv_bytes, content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = f'attachment; filename="{fname}"'
+        return resp
+
+    except Exception:
+        print("❌ Lỗi download_overview:\n", traceback.format_exc())
+        return JsonResponse({"ok": False}, status=500)
