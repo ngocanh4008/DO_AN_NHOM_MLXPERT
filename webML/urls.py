@@ -32,4 +32,6 @@ urlpatterns = [
     path('api/download_report/', views.download_report, name='download_report'),
     path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
     path('reports/redownload/<int:report_id>', views.api_redownload_report, name='api_redownload_report'),
+    path("api/overview/", views.api_overview, name="api_overview"),      # ✅ API lấy dữ liệu JSON
+    path("api/download_overview/", views.download_overview, name="download_overview"),
 ]

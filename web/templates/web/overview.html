@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Báo cáo tổng quan | MLXpert</title>
+
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'web/css/overview.css' %}">
+</head>
+
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-card">
+      <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" style="width: 140px;"/>
+    </div>
+    <nav class="menu">
+      <a class="menu-item active" href="{% url 'overview' %}">
+        <img src="{% static 'web/img/ic_bao_cao.png' %}" /> Báo cáo tổng quan
+      </a>
+      <a class="menu-item" href="{% url 'predict' %}">
+        <img src="{% static 'web/img/ic_du_bao.png' %}" /> Dự báo nhu cầu
+      </a>
+      <a class="menu-item" href="{% url 'price' %}">
+        <img src="{% static 'web/img/ic_gia.png' %}" /> Mô phỏng giá & khuyến mãi
+      </a>
+      <a class="menu-item" href="#">
+        <img src="{% static 'web/img/ic_quan_ly.png' %}" /> Quản lý báo cáo
+      </a>
+      <a class="menu-item" href="{% url 'logout' %}">
+        <img src="{% static 'web/img/ic_dang_xuat.png' %}" /> Đăng xuất
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <h1>BÁO CÁO TỔNG QUAN</h1>
+      <div class="userbox">
+        <span>Xin chào Admin!</span>
+        <i class="ri-user-3-line avatar"></i>
+      </div>
+    </header>
+
+    <!-- FILTER BAR -->
+    <section class="filters card">
+      <div class="filters-left">
+        <div class="filter">
+          <label>Sản phẩm</label>
+          <select id="f-product">
+            <option value="ALL">Tất cả</option>
+            {% for p in products %}
+              <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter">
+          <label>Khu vực</label>
+          <select id="f-region">
+            <option value="ALL">Toàn quốc</option>
+            {% for r in regions %}
+              <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="filters-right">
+        <button id="btn-filter" class="btn btn-primary">
+          <i class="ri-filter-line"></i> Lọc
+        </button>
+        <button id="btn-export" class="btn btn-orange">
+          <i class="ri-download-2-line"></i> Tải kết quả
+        </button>
+      </div>
+    </section>
+
+    <!-- KPI CARDS -->
+    <section class="kpis">
+      <div class="kpi card"><p>Tổng doanh thu</p><h3 id="kpi-revenue">—</h3><span class="kpi-sub">VNĐ</span></div>
+      <div class="kpi card"><p>Tổng chi phí</p><h3 id="kpi-cost">—</h3><span class="kpi-sub">VNĐ</span></div>
+      <div class="kpi card"><p>Tổng lợi nhuận</p><h3 id="kpi-profit">—</h3><span class="kpi-sub">VNĐ</span></div>
+      <div class="kpi card"><p>Lợi nhuận %</p><h3 id="kpi-profit-rate">—</h3><span class="kpi-sub">Tỷ lệ (%)</span></div>
+    </section>
+
+    <!-- MAIN CHART -->
+    <section class="card big-chart">
+      <div class="card-title">Doanh thu &amp; lợi nhuận theo thời gian</div>
+      <canvas id="chart-rev-profit" height="200"></canvas>
+    </section>
+
+    <!-- SUB CHARTS -->
+    <section class="grid-subtop">
+      <div class="left-charts">
+        <div class="card">
+          <div class="card-title">Cơ cấu theo khu vực</div>
+          <canvas id="chart-region" height="220"></canvas>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <div class="card-title">Cơ cấu theo sản phẩm</div>
+          <canvas id="chart-product-group"></canvas>
+        </div>
+      </div>
+
+      <div class="top5-card card">
+        <div class="card-title">Top các sản phẩm theo doanh thu</div>
+        <canvas id="chart-top5"></canvas>
+        <div id="top5-list" style="padding:16px;">
+          <ol id="top5-ol" style="padding-left:18px; margin:0; color:var(--muted);">
+            <li>—</li><li>—</li><li>—</li><li>—</li><li>—</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'web/js/overview.js' %}"></script>
+</body>
+</html>
