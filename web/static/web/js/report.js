@@ -226,7 +226,7 @@ function createPageButton(text, pageValue, isEnabled, isActive = false) {
 function redownloadReport(id, filename) {
     // Chuyển hướng trình duyệt đến URL API GET mới
     // Trình duyệt sẽ tự động tải file từ response của backend
-    window.location.href = '/reports/redownload/${id}';
+    window.location.href = `/reports/redownload/${id}`;
 }
 
 function deleteReport(id, name) {
