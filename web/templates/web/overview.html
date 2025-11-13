@@ -6,16 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Báo cáo tổng quan | MLXpert</title>
 
-  <!-- Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="{% static 'web/css/overview.css' %}">
 </head>
 
 <body>
 <div class="layout">
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo-card">
       <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" style="width: 140px;"/>
@@ -30,7 +27,7 @@
       <a class="menu-item" href="{% url 'price' %}">
         <img src="{% static 'web/img/ic_gia.png' %}" /> Mô phỏng giá & khuyến mãi
       </a>
-      <a class="menu-item" href="#">
+      <a class="menu-item" href="{% url 'report' %}">
         <img src="{% static 'web/img/ic_quan_ly.png' %}" /> Quản lý báo cáo
       </a>
       <a class="menu-item" href="{% url 'logout' %}">
@@ -39,9 +36,7 @@
     </nav>
   </aside>
 
-  <!-- MAIN -->
   <main class="main">
-    <!-- TOP BAR -->
     <header class="topbar">
       <h1>BÁO CÁO TỔNG QUAN</h1>
       <div class="userbox">
@@ -50,7 +45,6 @@
       </div>
     </header>
 
-    <!-- FILTER BAR -->
     <section class="filters card">
       <div class="filters-left">
         <div class="filter">
@@ -84,7 +78,6 @@
       </div>
     </section>
 
-    <!-- KPI CARDS -->
     <section class="kpis">
       <div class="kpi card"><p>Tổng doanh thu</p><h3 id="kpi-revenue">—</h3><span class="kpi-sub">VNĐ</span></div>
       <div class="kpi card"><p>Tổng chi phí</p><h3 id="kpi-cost">—</h3><span class="kpi-sub">VNĐ</span></div>
@@ -92,13 +85,11 @@
       <div class="kpi card"><p>Lợi nhuận %</p><h3 id="kpi-profit-rate">—</h3><span class="kpi-sub">Tỷ lệ (%)</span></div>
     </section>
 
-    <!-- MAIN CHART -->
     <section class="card big-chart">
       <div class="card-title">Doanh thu &amp; lợi nhuận theo thời gian</div>
       <canvas id="chart-rev-profit" height="200"></canvas>
     </section>
 
-    <!-- SUB CHARTS -->
     <section class="grid-subtop">
       <div class="left-charts">
         <div class="card">

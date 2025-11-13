@@ -27,16 +27,16 @@
                 <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
               </div>
               <nav class="menu">
-                <a class="menu-item" href="{% url 'home' %}">
+                <a class="menu-item" href="{% url 'overview' %}">
                   <img src="{% static 'web/img/ic_bao_cao.png' %}"/> Báo cáo tổng quan
                 </a>
-                <a class="menu-item" href="#">
+                <a class="menu-item" href="{% url 'overview' %}">
                   <img src="{% static 'web/img/ic_du_bao.png' %}"/> Dự báo nhu cầu
                 </a>
-                <a class="menu-item" href="#">
+                <a class="menu-item" href="{% url 'price' %}">
                   <img src="{% static 'web/img/ic_gia.png' %}"/> Mô phỏng giá & khuyến mãi
                 </a>
-                <a class="menu-item active" href="#">
+                <a class="menu-item active" href="{% url 'report' %}">
                   <img src="{% static 'web/img/ic_quan_ly.png' %}"/> Quản lý báo cáo
                 </a>
                 <a class="menu-item" href="{% url 'logout' %}">

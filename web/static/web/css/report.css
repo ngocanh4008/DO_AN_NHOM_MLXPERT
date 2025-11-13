@@ -1,30 +1,26 @@
-/* ============================= */
-/* COLOR VARIABLES (Kế thừa cũ) */
-/* ============================= */
+/* =================================== */
+/* GLOBAL VARIABLES & BASE STYLES      */
+/* (Lấy từ FILE CHUẨN)                 */
+/* =================================== */
 :root{
   --blue:#01203F;
   --orange:#FD7132;
   --gray:#D9D9D9;
   --soft:#FFFDF2;
   --text:#01203F;
-  --link-blue: #085195; /* Màu link Báo cáo 1 */
-  --active-page-blue: #1890FF; /* Màu trang phân trang active */
-  --back-button-blue: #002479; /* Màu nút Back */
-  --header-bg: #E9E9EB;
   --radius:12px;
   --gap:16px;
   --shadow:0 2px 10px rgba(0,0,0,.06);
 }
-
-/* ============================= */
-/* BASE STYLES */
-/* ============================= */
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -apple-system, Arial, sans-serif; color:var(--text); }
+a{text-decoration: none;}
 
-/* ============================= */
-/* LAYOUT CHUNG */
-/* ============================= */
+/* =================================== */
+/* LAYOUT & SIDEBAR (FILE CHUẨN)       */
+/* =================================== */
+
+/* Layout 2 cột */
 .layout{ display:grid; grid-template-columns: 295px 1fr; min-height:100vh; }
 
 /* Sidebar */
@@ -35,217 +31,192 @@ html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -app
 .menu-item{ background:transparent; border:none; color:#fff; text-align:left; font-weight:700; font-size:16px; padding:6px 0; cursor:pointer; text-decoration: none;}
 .menu-item.active, .menu-item:hover{ color:var(--orange); }
 
-/* Logo text */
-.logo-text{ font-size: 36px; font-weight: 700; padding: 20px 0; text-align: center; margin-bottom: 20px;}
-.logo-text span:first-child{ color: #fff; }
-.logo-text span:last-child{ color: var(--orange); }
-
-/* Menu */
-.menu{margin-top: auto;display:flex; flex-direction:column; gap:14px; text-decoration: none}
-.menu-item{
-    background:transparent; border:none; color:#fff; text-align:left;
-    font-weight:700; font-size:16px; padding:8px 0; cursor:pointer;
-    text-decoration: none; display: flex; align-items: center; gap: 20px;
-    transition: background 0.2s;
-}
-.menu-item img { width: 24px; height: 24px; }
-
-/* Active item */
-.menu-item.active{
-    color:var(--orange);
-    font-size: 21px;
-    padding: 10px 0;
-    position: relative;
-}
-.menu-item.active::before {
-    content: '';
-    position: absolute;
-    left: -20px;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--orange);
-    border-radius: 0 4px 4px 0;
-}
-.menu-item:hover{ background-color: rgba(255, 255, 255, 0.05); }
-
-/* Logout */
-.logout-item {
-    font-size: 24px;
-    font-weight: 600;
-    color: #fff;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    padding-top: 20px;
-}
-.logout-item img { width: 32px; height: 32px; }
-
-/* ============================= */
-/* MAIN CONTENT */
-/* ============================= */
+/* Main, Topbar, Header (FILE CHUẨN) */
 .main{ background:#fff; display:flex; flex-direction:column; }
-
-/* Topbar */
-.topbar{ height:40px; background:var(--header-bg); display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 24px; }
-.greeter{ font-size:14px; color:#000; font-family: "Inter Medium"; }
-.profile-placeholder { width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 1px solid #ccc; }
-
-/* Header block */
+.topbar{ height:40px; background:#E9E9EB; display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 24px; }
+.greeter{ font-size:14px; color:#000; }
+.download-btn{ background:var(--orange); color:#fff; font-weight:700; font-size:18px; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; }
 .header-block{ padding:24px 24px 0 24px; }
 .header-block h1{ font-size:36px; margin:0; font-weight:700; color:var(--blue); }
+.header-block p{ font-size:15px; margin:8px 0 0; color:var(--blue); }
 
-/* ============================= */
-/* REPORT CONTENT */
-/* ============================= */
-.report-content { padding: 24px 24px 32px 24px; }
-
-/* Search Bar */
-.search-container {
-    margin-bottom: 30px;
-    position: relative;
-    width: 70%;
+/* Date Info (FILE CHUẨN) */
+.date-info {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 15px;
+  color: #333;
 }
-.search-container input {
-    width: 100%;
-    padding: 12px 12px 12px 40px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-}
-.search-container .search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    color: #888;
+.time-card {
+  background: #f8f9fb;
+  border-radius: 8px;
+  padding: 6px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-/* Back button & filters */
-.action-filter-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 20px;
+/* =================================== */
+/* FORM & CARD CONTENT (FILE CHUẨN)    */
+/* =================================== */
+.content{ padding: 16px 24px 32px 24px; display:grid; grid-template-columns: 1.05fr .95fr; gap:24px; }
+.card{ background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
+.form-card{ background:var(--gray); }
+.form-card h2{ margin:0 0 12px 0; font-size:20px; }
+.form-grid{ display:grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap:16px; }
+.field label{ display:block; font-weight:700; margin-bottom:6px; }
+.field input[type="number"], .field input[type="text"], .field select{ width:100%; height:42px; border:1px solid #ccc; border-radius:8px; padding:8px; font-size:14px; }
+#discount_rate{ width:100%; accent-color:var(--orange); }
+
+/* Switch (FILE CHUẨN) */
+.promo-row{ margin-top:14px; display:flex; align-items:center; gap:12px; font-weight:700; }
+.switch{ position:relative; display:inline-block; width:44px; height:24px; }
+.switch input{ opacity:0; width:0; height:0; }
+.slider-btn{ position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:24px; transition:.25s; }
+.slider-btn:before{ content:""; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.25s; }
+.switch input:checked + .slider-btn{ background:var(--orange); }
+.switch input:checked + .slider-btn:before{ transform:translateX(20px); }
+.run-btn{ margin-top:16px; background:#63B17D; color:#fff; border:none; border-radius:8px; padding:12px 20px; font-weight:700; cursor:pointer; }
+
+/* Right column (FILE CHUẨN) */
+.right-col{ display:flex; flex-direction:column; gap:24px; }
+.result-card h2, .ai-card h2{ margin:0 0 12px 0; font-size:20px; }
+.kq{ margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+.dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; transform: translateY(1px); }
+.ok{ background:#45C172; }
+.ai-text{ background:var(--soft); border-radius:8px; padding:12px; min-height:120px; }
+
+/* =================================== */
+/* REPORT & TABLE SPECIFIC STYLES      */
+/* (Lấy từ FILE CẦN CHỈNH SỬA)         */
+/* =================================== */
+.report-content{ padding:24px 24px 32px 24px; }
+.search-container{ margin-bottom:30px; position:relative; width:70%; }
+.search-container input{
+  width:100%; padding:12px 12px 12px 40px; border:1px solid #ccc;
+  border-radius:8px; font-size:16px;
 }
-
-.back-button {
-    background: var(--back-button-blue);
-    color: #fff;
-    font-size: 20px;
-    font-weight: 500;
-    padding: 12px 24px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    text-decoration: none;
-    height: 48px;
-    transition: background 0.2s;
+.search-container .search-icon{
+  position:absolute; left:10px; top:50%;
+  transform:translateY(-50%); width:20px; height:20px; color:#888;
 }
-.back-button:hover { background: #001f68; }
-
-.filters {
-    display: flex;
-    gap: var(--gap);
+.action-filter-bar{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:20px; gap:20px;
 }
-
-.dropdown-filter {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    font-weight: 700;
-    min-width: 150px;
-    height: 48px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+.back-button{
+  background: #002479; color:#fff; font-size:20px; font-weight:500;
+  padding:12px 24px; border-radius:8px; display:flex; align-items:center;
+  gap:10px; cursor:pointer; text-decoration:none; height:48px;
+  transition:background 0.2s;
 }
-
-/* ============================= */
-/* REPORT TABLE */
-/* ============================= */
-.report-table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: var(--shadow);
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
+.back-button:hover{ background:#001f68; }
+.filters{ display:flex; gap:50px; }
+.dropdown-filter{
+  padding:10px 15px; border:1px solid #ccc; border-radius:8px;
+  background:#fff; display:flex; align-items:center; gap: 12px;
+  justify-content:space-between; cursor:pointer; font-weight:700;
+  min-width:150px; height:48px; box-shadow:0 1px 3px rgba(0,0,0,0.05);
 }
-.report-table thead { background: #F7F7F8; color: #555; }
-.report-table th, .report-table td { padding: 15px; text-align:left; border-bottom:1px solid #eee; }
-.report-table th { font-size:14px; font-weight:700; text-transform: uppercase; }
-.report-table td { font-size:14px; color:#000; }
-
-/* STT Circle */
-.stt-cell { width: 30px; text-align:center; }
-.stt-circle { display: inline-flex; align-items:center; justify-content:center; width:25px; height:25px; border-radius:50%; background-color:var(--blue); color:#fff; font-size:12px; font-weight:700; }
-.stt-circle.active-stt { background-color:#555; }
-
-/* Report link */
-.report-link { color: var(--link-blue); font-weight: 500; text-decoration:none; transition: color 0.2s; }
-.report-link:hover { text-decoration: underline; }
-
-/* Action buttons */
-.action-buttons button { background:none; border:none; cursor:pointer; color:#555; margin-left:10px; transition: color 0.2s; }
-.action-buttons button:hover { color: var(--link-blue); }
-.action-buttons button.delete:hover { color:#f00; }
-.action-buttons svg { width:18px; height:18px; display:inline-block; }
-
-/* Pagination */
-.pagination {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 20px 0;
-    gap: 8px;
+.report-table{
+  width:100%; min-width:900px; border-collapse:collapse;
+  box-shadow: var(--shadow); background:#fff; border-radius:8px; overflow:hidden;
 }
-
-.page-btn {
-    width: 32px; height:32px; border:1px solid #ccc; border-radius:6px;
-    background:#fff; cursor:pointer; font-size:14px; transition:all 0.2s;
+.report-table thead{ background:#F7F7F8; color:#555; }
+.report-table th, .report-table td{ padding:15px; text-align:left; border-bottom:1px solid #eee; }
+.report-table th{ font-size:14px; font-weight:700; text-transform:uppercase; }
+.report-table td{ font-size:14px; color:#000; }
+.stt-cell{ width:30px; text-align:center; }
+.stt-circle{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:25px; height:25px; border-radius:50%; background-color:var(--blue);
+  color:#fff; font-size:12px; font-weight:700;
 }
-.page-btn:hover:not(.active) { background:#f0f0f0; }
-.page-btn.active { background: var(--active-page-blue); color:#fff; border-color: var(--active-page-blue); font-weight:600; }
+.stt-circle.active-stt{ background-color:#555; }
+.report-link{ color: #085195; font-weight:500; text-decoration:none; transition:color 0.2s; }
+.report-link:hover{ text-decoration:underline; }
+.action-buttons button{
+  background:none; border:none; cursor:pointer; color:#555;
+  margin-left:10px; transition:color 0.2s;
+}
+.action-buttons button:hover{ color: #085195; }
+.action-buttons button.delete:hover{ color:#f00; }
+.action-buttons svg{ width:18px; height:18px; display:inline-block; }
+.pagination{ display:flex; justify-content:flex-end; align-items:center; padding:20px 0; gap:8px; }
+.page-btn{
+  width:32px; height:32px; border:1px solid #ccc; border-radius:6px;
+  background:#fff; cursor:pointer; font-size:14px; transition:all 0.2s;
+}
+.page-btn:hover:not(.active){ background:#f0f0f0; }
+.page-btn.active{ background: #1890FF; color:#fff; border-color: #1890FF; font-weight:600; }
 
-/* ============================= */
-/* RESPONSIVE */
-/* ============================= */
+
+/* =================================== */
+/* CHART SECTION (FILE CHUẨN)          */
+/* =================================== */
+#chart-section{
+  display:flex; flex-direction:column; gap:20px;
+  padding: 0 24px 28px 24px;
+}
+.chart-row{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+.chart-card{
+  background:#fff; border-radius:12px;
+  box-shadow: var(--shadow); padding:18px;
+}
+.chart-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:10px;
+}
+.chart-header h3{ margin:0; font-size:18px; font-weight:800; color:var(--text); }
+.badge{ background:#E9E9EB; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:700; }
+
+.chart-tabs{ display:flex; gap:8px; }
+.chart-tabs .tab{
+  border:none; background:#E9E9EB; color:#000; font-weight:700;
+  padding:6px 12px; border-radius:8px; cursor:pointer;
+}
+.chart-tabs .tab.active{ background:#FD7132; color:#fff; }
+.chart-body{ height:280px; background:#F7F7F8; border-radius:10px; }
+#chart_growth{ margin-top:0; }
+
+/* =================================== */
+/* RESPONSIVE (FILE CHUẨN + REPORT)    */
+/* =================================== */
+
+/* Quy tắc chung khi màn hình nhỏ */
 @media (max-width: 1200px){
-  .layout{ grid-template-columns: 76px 1fr; }
-  .menu-item span{ display:none; }
-  .menu-item img { margin-left: 12px; }
-  .menu-item.active::before { left: 0; }
-  .logout-item span{ display:none; }
-  .logout-item img { margin-left: 12px; }
+  /* Cho trang mô phỏng/content */
+  .content{ grid-template-columns: 1fr; }
+  .chart-row{ grid-template-columns: 1fr; }
+
+  /* Cập nhật cho trang báo cáo */
+  .search-container{ width: 100%; } /* Ô tìm kiếm chiếm 100% */
+
+  /* Cho phép các thanh hành động và bộ lọc xuống dòng */
+  .action-filter-bar{
+    flex-direction: column; /* Sắp xếp các mục theo chiều dọc */
+    align-items: flex-start; /* Căn chỉnh lại các mục về bên trái */
+    gap: 15px; /* Giảm khoảng cách giữa các khối chính */
+  }
+
+  .filters{
+    flex-wrap: wrap; /* Cho phép các bộ lọc con xuống dòng */
+    gap: 15px; /* Giảm khoảng cách giữa các bộ lọc */
+  }
 }
 
+/* Quy tắc cho màn hình rất nhỏ (Tablet dọc, Mobile ngang) */
 @media (max-width: 768px){
-    .action-filter-bar { flex-direction: column; align-items: flex-start; }
-    .filters { flex-wrap: wrap; }
-    .dropdown-filter { min-width: 120px; }
-    .search-container { width: 100%; }
-    .report-table, .report-table thead, .report-table tbody, .report-table th, .report-table td, .report-table tr {
-        display: block; width: 100%;
-    }
-    .report-table thead { display: none; }
-    .report-table tr { border-bottom: 2px solid #ddd; margin-bottom: 10px; }
-    .report-table td { text-align: right; padding-left: 50%; position: relative; }
-    .report-table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        width: calc(50% - 30px);
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: 700;
-        color: #555;
-    }
+  /* Sidebar/Layout */
+  .layout{ grid-template-columns: 76px 1fr; }
+  .menu-item{ font-size:0; }
+  .menu-item::before{ content:"•"; font-size:18px; color:#fff; }
+  .logo-card{display: none !important}
+
+  /* Bảng dữ liệu có thể cuộn ngang */
+  .report-table-wrapper{
+    overflow-x: auto;
+  }
+  .report-table{
+    min-width: 700px; /* Đảm bảo bảng có chiều rộng tối thiểu để không bị méo */
+  }
 }

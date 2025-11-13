@@ -7,7 +7,7 @@ const toCurrency = (v) => (v == null ? "—" : Number(v).toLocaleString("vi-VN")
 
 let chartRegion = null;
 let chartMain = null;
-let chartProductGroup = null; 
+let chartProductGroup = null;
 let chartTop5 = null; // now has its own canvas FIXED
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -177,7 +177,24 @@ function renderProductGroupChart(rows) {
     type: "pie",
     data: {
       labels: top.map(x => x.label),
-      datasets: [{ data: top.map(x => x.value) }]
+      datasets: [{
+          data: top.map(x => x.value),
+          // BỔ SUNG MÀU NỀN CHO BIỂU ĐỒ TRÒN
+          backgroundColor: [
+              '#0b5ed7',
+              '#ff7a00',
+              '#20c997',
+              '#6f42c1',
+              '#dc3545',
+              '#fd7e14',
+              '#0dcaf0',
+              '#e83e8c',
+              '#6610f2',
+              '#198754',
+              '#adb5bd',
+              '#343a40'
+          ]
+      }]
     },
     options: {
       responsive: true,

@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'mlxpert_retail',        # Tên database
         'USER': 'root',                 # Tài khoản
-        'PASSWORD': 'Khanhdu@123',
+        'PASSWORD': '@Obama123',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {'charset': 'utf8mb4'},
@@ -127,13 +127,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/web/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+STATIC_URL = '/static/'  # Sửa thành /static/
 
 STATICFILES_DIRS = [
-    BASE_DIR / "web/static/",
+    BASE_DIR / "web/static", # Bỏ dấu "/" ở cuối để dễ quản lý hơn
 ]

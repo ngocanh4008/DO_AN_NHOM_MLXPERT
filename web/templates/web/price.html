@@ -15,16 +15,16 @@
         <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
       </div>
       <nav class="menu">
-        <a class="menu-item" href="{% url 'home' %}">
+        <a class="menu-item" href="{% url 'overview' %}">
           <img src="{% static 'web/img/ic_bao_cao.png' %}"/> Báo cáo tổng quan
         </a>
-        <a class="menu-item" href="#">
+        <a class="menu-item" href="{% url 'overview' %}">
           <img src="{% static 'web/img/ic_du_bao.png' %}"/> Dự báo nhu cầu
         </a>
         <a class="menu-item active" href="{% url 'price' %}">
           <img src="{% static 'web/img/ic_gia.png' %}"/> Mô phỏng giá & khuyến mãi
         </a>
-        <a class="menu-item" href="#">
+        <a class="menu-item" href="{% url 'report' %}">
           <img src="{% static 'web/img/ic_quan_ly.png' %}"/> Quản lý báo cáo
         </a>
         <a class="menu-item" href="{% url 'logout' %}">
@@ -113,7 +113,7 @@
               <li>Dự đoán: <b id="kq_sold">—</b> sản phẩm / tuần</li>
               <li>Doanh thu ước tính: <b id="kq_rev">—</b> đ</li>
               <li>Lợi nhuận ước tính: <b id="kq_profit">—</b> đ</li>
-             
+
             </ul>
           </div>
 
@@ -143,8 +143,8 @@
           <div class="chart-body" id="chart_top_regions" style="width:100%; height:400px;"></div>
         </div>
 
-        
-        
+
+
 
       </section>
     </main>
