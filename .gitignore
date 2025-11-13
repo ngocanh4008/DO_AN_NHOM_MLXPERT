@@ -1,0 +1,27 @@
+Django and Python specific ignores
+
+*.pyc
+*~
+pycache/
+.ipynb_checkpoints
+.DS_Store
+
+Virtual Environment
+
+.venv/
+env/
+venv/
+
+Database
+
+db.sqlite3
+
+Media/Static files
+
+/media
+/static
+
+IDE specific files
+
+.idea/
+.vscode/
