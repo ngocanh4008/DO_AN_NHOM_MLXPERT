@@ -21,7 +21,7 @@
       <a class="menu-item active" href="{% url 'overview' %}">
         <img src="{% static 'web/img/ic_bao_cao.png' %}" /> Báo cáo tổng quan
       </a>
-      <a class="menu-item" href="{% url 'predict' %}">
+      <a class="menu-item" href="{% url 'forecast' %}">
         <img src="{% static 'web/img/ic_du_bao.png' %}" /> Dự báo nhu cầu
       </a>
       <a class="menu-item" href="{% url 'price' %}">
@@ -48,7 +48,7 @@
     <section class="filters card">
       <div class="filters-left">
         <div class="filter">
-          <label>Sản phẩm</label>
+          <label>Sản phẩm: </label>
           <select id="f-product">
             <option value="ALL">Tất cả</option>
             {% for p in products %}
@@ -58,7 +58,7 @@
         </div>
 
         <div class="filter">
-          <label>Khu vực</label>
+          <label>Khu vực: </label>
           <select id="f-region">
             <option value="ALL">Toàn quốc</option>
             {% for r in regions %}
@@ -69,9 +69,15 @@
       </div>
 
       <div class="filters-right">
-        <button id="btn-filter" class="btn btn-primary">
-          <i class="ri-filter-line"></i> Lọc
+        <!-- NÚT LỌC – ĐANG THỐNG KÊ -->
+        <button id="btn-filter"
+                class="btn btn-primary"
+                data-icon-loading="{% static 'web/img/hourglass.png' %}"
+                data-icon-default="{% static 'web/img/ic_loc.png' %}">
+          <img src="{% static 'web/img/ic_loc.png' %}" class="btn-icon" alt="">
+          Lọc
         </button>
+
         <button id="btn-export" class="btn btn-orange">
           <i class="ri-download-2-line"></i> Tải kết quả
         </button>
@@ -108,6 +114,7 @@
         <canvas id="chart-top5"></canvas>
         <div id="top5-list" style="padding:16px;">
           <ol id="top5-ol" style="padding-left:18px; margin:0; color:var(--muted);">
+          <div id="top5-note" style="margin-top: 6px; color:#dc3545; font-size:14px; display:none;"></div>
             <li>—</li><li>—</li><li>—</li><li>—</li><li>—</li>
           </ol>
         </div>

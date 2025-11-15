@@ -8,27 +8,21 @@
   overflow-x: hidden;
 }
 
-/* Toàn bộ màn hình */
 body {
   background-color: #ffffff;
-  width: 1440px;
-  height: 800px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
-/* ============================= */
-/* BỐ CỤC LOGIN CHIA 2 CỘT */
-/* ============================= */
 .login-container {
   display: flex;
   width: 900px;
   height: 500px;
-  margin: 0 auto;
   background-color: #fff;
   border-radius: 10px;
   overflow: hidden;
+  margin: auto;              /* CĂN GIỮA CHUẨN */
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
@@ -160,7 +154,7 @@ input:focus {
 .footer {
   background-color: #001f3f;
   color: #fff;
-  margin-top: 40px;
+  margin-top: auto;
   padding: 20px 0;
   font-size: 13px;
   width: 100%;

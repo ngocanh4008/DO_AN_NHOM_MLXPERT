@@ -3,13 +3,13 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Mô phỏng giá & khuyến mãi</title>
+  <title>Mô phỏng giá & khuyến mãi | MLXpert</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{% static 'web/css/price.css' %}">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
 <body>
   <div class="layout">
-    <!-- ===== SIDEBAR ===== -->
     <aside class="sidebar">
       <div class="logo-card">
         <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
@@ -18,7 +18,7 @@
         <a class="menu-item" href="{% url 'overview' %}">
           <img src="{% static 'web/img/ic_bao_cao.png' %}"/> Báo cáo tổng quan
         </a>
-        <a class="menu-item" href="{% url 'overview' %}">
+        <a class="menu-item" href="{% url 'forecast' %}">
           <img src="{% static 'web/img/ic_du_bao.png' %}"/> Dự báo nhu cầu
         </a>
         <a class="menu-item active" href="{% url 'price' %}">
@@ -33,26 +33,30 @@
       </nav>
     </aside>
 
-    <!-- ===== MAIN ===== -->
     <main class="main">
-      <!-- ===== HEADER ===== -->
       <header class="topbar">
-        <div class="greeter">Xin chào Admin!</div>
-        <button id="btn_download" class="download-btn">Tải xuống báo cáo</button>
+        <h1>MÔ PHỎNG GIÁ & KHUYẾN MÃI</h1>
+        <div class="userbox">
+          <span>Xin chào Admin!</span>
+          <i class="ri-user-3-line avatar"></i>
+        </div>
       </header>
 
-      <!-- ===== TITLE ===== -->
-      <section class="header-block">
-        <h1>MÔ PHỎNG GIÁ & KHUYẾN MÃI</h1>
-        <p>Sản lượng bán & doanh thu dựa trên thay đổi giá và khuyến mãi</p>
-        <section class="date-info">
-  <div class="time-card"><b>Ngày:</b> {{ today }}</div>
-  <div class="time-card"><b>Tuần:</b> {{ week_num }} ({{ week_range }})</div>
-  <div class="time-card"><b>Năm:</b> {{ year }}</div>
-</section>
-      </section>
+      <div class="sub-header-info">
 
-      <!-- ===== INPUT FORM ===== -->
+        <section class="date-info">
+          <div class="time-card"><b>Ngày:</b> {{ today }}</div>
+          <div class="time-card"><b>Tuần:</b> {{ week_num }} ({{ week_range }})</div>
+          <div class="time-card"><b>Năm:</b> {{ year }}</div>
+        </section>
+
+        <div style="margin-bottom: 20px;">
+             <button id="btn_download" class="btn btn-orange">
+                <i class="ri-download-2-line"></i> Tải xuống báo cáo
+             </button>
+        </div>
+      </div>
+
       <section class="content">
         <div class="card form-card">
           <h2>THÔNG SỐ NHẬP LIỆU</h2>
@@ -65,7 +69,6 @@
                 {% endfor %}
               </select>
             </div>
-
             <div class="field">
               <label>Thương hiệu</label>
               <select id="brand_name">
@@ -103,7 +106,9 @@
             </div>
           </div>
 
-          <button id="run_btn" class="run-btn">CHẠY MÔ PHỎNG</button>
+          <button id="run_btn" class="btn btn-green">
+            <i class="ri-cpu-line"></i> CHẠY MÔ PHỎNG
+          </button>
         </div>
 
         <div class="right-col">
@@ -124,28 +129,23 @@
         </div>
       </section>
 
-      <!-- ===== CHART SECTION ===== -->
       <section id="chart-section">
         <div class="chart-card">
           <div class="chart-header"><h3>Biểu đồ tăng trưởng doanh thu</h3></div>
           <div class="chart-body" id="chart_main" style="width:100%; height:400px;"></div>
         </div>
-        <div class="chart-card">
-        <!--Biểu đồ mô phỏng khuyến mãi -->
-        <div class="chart-card">
-          <div class="chart-header"><h3>Biểu đồ mô phỏng ảnh hưởng của khuyến mãi</h3></div>
-          <div class="chart-body" id="price-chart" style="width:100%; height:450px;"></div>
+
+        <div class="chart-row">
+            <div class="chart-card">
+              <div class="chart-header"><h3>Biểu đồ mô phỏng ảnh hưởng của khuyến mãi</h3></div>
+              <div class="chart-body" id="price-chart" style="width:100%; height:450px;"></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header"><h3>Tỷ trọng doanh số theo vùng miền</h3></div>
+              <div class="chart-body" id="chart_top_regions" style="width:100%; height:400px;"></div>
+            </div>
         </div>
-
-        <!--Biểu đồ vùng miền (Pie Chart) -->
-        <div class="chart-card">
-          <div class="chart-header"><h3>Tỷ trọng doanh số theo vùng miền</h3></div>
-          <div class="chart-body" id="chart_top_regions" style="width:100%; height:400px;"></div>
-        </div>
-
-
-
-
       </section>
     </main>
   </div>

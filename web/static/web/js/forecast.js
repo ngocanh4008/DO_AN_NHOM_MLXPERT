@@ -1,7 +1,6 @@
 // =======================================================
 // FORECAST DASHBOARD – DỰ BÁO NHU CẦU
 // =======================================================
-
 // Helper: định dạng số VN
 const fmtInt = (n) => (n ?? 0).toLocaleString("vi-VN");
 const $ = (s) => document.querySelector(s);
@@ -20,7 +19,7 @@ let chartForecast, chartRegion, chartTop;
 document.addEventListener("DOMContentLoaded", () => {
   $("#btn-forecast")?.addEventListener("click", runForecast);
   $("#btn-train")?.addEventListener("click", trainModel);
-  $("#btn-export")?.addEventListener("click", exportResult);
+  $("#btn-export")?.addEventListener("click", exportResult); // Đã kết nối hàm tải file thật
 
   // Auto load dự báo ban đầu
   runForecast();
@@ -28,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Reload khi thay đổi filter
   ["#f-product-id", "#f-region", "#f-model", "#f-month-horizon"].forEach((sel) => {
     const el = $(sel);
-    if (el) el.addEventListener("change", () => runForecast());
+    //if (el) el.addEventListener("change", () => runForecast());
   });
 });
 
@@ -49,10 +48,13 @@ function getRegion() {
   return v === "" ? "ALL" : v;
 }
 
+// static/web/js/forecast.js (tìm và thay thế hàm này)
+
 function getModel() {
   const el = document.getElementById("f-model");
-  if (!el) return "xgb";
-  return (el.value || "xgb").trim().toLowerCase();
+  // Trả về tên file chính xác (ví dụ: 'ligth_gbm_v8_grid.pkl')
+  if (!el) return "lightgbm_v8_grid.pkl";
+  return el.value || "lightgbm_v8_grid.pkl";
 }
 
 function getHorizon() {
@@ -62,10 +64,15 @@ function getHorizon() {
 }
 
 // =======================================================
-// Gọi API Dự báo
+// Gọi API Dự báo (Không đổi)
 // =======================================================
 async function runForecast() {
-    
+  const btn = $("#btn-forecast");
+
+  // Lấy đường dẫn icon từ HTML (CHUẨN)
+  const iconLoading = btn.dataset.iconLoading;
+  const iconDefault = btn.dataset.iconDefault;
+
   try {
     const payload = {
       product_id: getSelectedProductId(),
@@ -74,8 +81,14 @@ async function runForecast() {
       horizon: getHorizon(),
     };
 
-    $("#btn-forecast").textContent = "⏳ Đang dự báo...";
-    $("#btn-forecast").disabled = true;
+    // ==========================
+    // HIỂN THỊ ICON LOADING PNG
+    // ==========================
+    btn.innerHTML = `
+      <img src="${iconLoading}" class="btn-icon">
+      Đang dự báo...
+    `;
+    btn.disabled = true;
 
     const res = await fetch("/api/forecast/", {
       method: "POST",
@@ -85,66 +98,105 @@ async function runForecast() {
 
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Lỗi không xác định");
-    
-    if (data.top_strongest) {
-        const nameEl = document.getElementById("top-strongest-name");
-        const trendEl = document.getElementById("top-strongest-trend");
-        
-        if (nameEl) nameEl.textContent = data.top_strongest;
-        if (trendEl) {
-            trendEl.textContent = data.trend === "tăng" ? "↑ xu hướng tăng" : "↓ xu hướng giảm";
-            trendEl.style.color = data.trend === "tăng" ? "#16a34a" : "#dc2626";
-        }
-    }
 
-    // Cập nhật KPI
+    // Update UI
     updateKPI(data);
-
-    // Vẽ biểu đồ chính
     drawForecastMain(data);
-
-    // Vẽ biểu đồ phụ (dữ liệu thật từ API)
     drawRegionChart(data.region_labels || [], data.region_data || []);
     drawTopChart(data.top_labels || [], data.top_changes || []);
-
-    // Sinh insight
     $("#insight").textContent = genInsight(data);
+
   } catch (e) {
     console.error("Forecast error:", e);
     alert("Lỗi khi chạy dự báo: " + e.message);
+
   } finally {
-    $("#btn-forecast").textContent = "Dự báo mới";
-    $("#btn-forecast").disabled = false;
+    // ==========================
+    // TRẢ NÚT VỀ ICON MẶC ĐỊNH PNG
+    // ==========================
+    btn.innerHTML = `
+      <img src="${iconDefault}" class="btn-icon">
+      Dự báo mới
+    `;
+    btn.disabled = false;
   }
 }
-
 // =======================================================
-// Huấn luyện mô hình (demo)
+// Tải kết quả (HÀM TẢI FILE THẬT)
 // =======================================================
-async function trainModel() {
-  $("#btn-train").disabled = true;
-  $("#btn-train").textContent = "⏳ Đang huấn luyện...";
+async function exportResult() {
   try {
-    await new Promise((r) => setTimeout(r, 1000));
-    alert("Huấn luyện mô hình thành công!");
+    const payload = {
+      product_id: getSelectedProductId(),
+      region: getRegion(),
+      model: getModel(),
+      horizon: getHorizon(),
+    };
+
+    // BƯỚC 1: Hiển thị trạng thái tải
+    $("#btn-export").disabled = true;
+    $("#btn-export").innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang tạo file...';
+
+    // BƯỚC 2: Gọi API để tạo và tải file
+    const res = await fetch("/api/forecast/export/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        // Xử lý lỗi từ server
+        let errorMessage = `Lỗi từ máy chủ: ${res.status} ${res.statusText}`;
+        try {
+            const errorData = await res.json();
+            if (errorData.error) {
+                errorMessage += ` - Chi tiết: ${errorData.error}`;
+            }
+        } catch (e) {
+            // Không phải JSON, dùng lỗi mặc định
+        }
+        throw new Error(errorMessage);
+    }
+
+    // BƯỚC 3: Xử lý phản hồi dạng Blob (file)
+    const blob = await res.blob();
+
+    // Đọc tên file từ header (Content-Disposition)
+    const contentDisposition = res.headers.get('Content-Disposition');
+    let filename = `du_bao_nhu_cau_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename\*?=['"]?([^'"]+)/i);
+        if (filenameMatch && filenameMatch[1]) {
+            // Xử lý trường hợp có mã hóa (ví dụ: UTF-8'')
+            filename = decodeURIComponent(filenameMatch[1].replace(/^UTF-8''/i, ''));
+        }
+    }
+
+    // BƯỚC 4: Tạo link ảo và kích hoạt tải file
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename; // Tên file
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+
+    console.log(`Tải file ${filename} thành công!`);
+
   } catch (e) {
-    console.error(e);
-    alert("Lỗi huấn luyện mô hình");
+    console.error("Lỗi khi tải file:", e);
+    alert("❌ Lỗi khi tải kết quả dự báo. Vui lòng kiểm tra console hoặc liên hệ IT.");
   } finally {
-    $("#btn-train").disabled = false;
-    $("#btn-train").textContent = "Huấn luyện mô hình";
+    // BƯỚC 5: Đảm bảo nút trở lại trạng thái ban đầu
+    $("#btn-export").innerHTML = '<i class="ri-download-2-line"></i> Tải kết quả';
+    $("#btn-export").disabled = false;
   }
 }
 
 // =======================================================
-// Tải kết quả
-// =======================================================
-function exportResult() {
-  alert("Giả lập: tải kết quả PDF/CSV");
-}
-
-// =======================================================
-// Cập nhật KPI
+// Cập nhật KPI (Không đổi)
 // =======================================================
 function updateKPI(data) {
   const k = data.kpis || {};
@@ -168,7 +220,7 @@ function updateKPI(data) {
 
 
 // =======================================================
-// Biểu đồ chính: Actual - Fitted - Forecast
+// Biểu đồ chính: Actual - Fitted - Forecast (Không đổi)
 // =======================================================
 function drawForecastMain(data) {
   const labelsHist = (data.labels_hist || []).map((m) => "Tháng " + m);
@@ -240,7 +292,7 @@ function drawForecastMain(data) {
 }
 
 // =======================================================
-// Biểu đồ phụ: Cơ cấu theo khu vực
+// Biểu đồ phụ: Cơ cấu theo khu vực (Không đổi)
 // =======================================================
 function drawRegionChart(labels, values) {
   const ctx = document.getElementById("chart-region")?.getContext("2d");
@@ -263,7 +315,7 @@ function drawRegionChart(labels, values) {
 }
 
 // =======================================================
-// Biểu đồ phụ: Top sản phẩm tăng/giảm
+// Biểu đồ phụ: Top sản phẩm tăng/giảm (Không đổi)
 // =======================================================
 function drawTopChart(labels, values) {
   const ctx = document.getElementById("chart-top")?.getContext("2d");
@@ -295,7 +347,7 @@ function drawTopChart(labels, values) {
 }
 
 // =======================================================
-// Sinh nội dung phân tích
+// Sinh nội dung phân tích (Không đổi)
 // =======================================================
 function genInsight(data) {
   const k = data.kpis || {};

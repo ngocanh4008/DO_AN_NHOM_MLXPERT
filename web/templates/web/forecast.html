@@ -6,35 +6,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dự báo nhu cầu | MLXpert</title>
 
-  <!-- Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
-
-
-
-  <!-- CSS -->
   <link rel="stylesheet" href="{% static 'web/css/forecast.css' %}" />
 </head>
 
 <body>
 <div class="layout">
+
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo-card">
-      <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" />
+      <img src="{% static 'web/img/logo.png' %}" alt="logo MLXpert" style="width: 140px;"/>
     </div>
+
     <nav class="menu">
-      <a class="menu-item" href="{% url 'home' %}">
+      <a class="menu-item" href="{% url 'overview' %}">
         <img src="{% static 'web/img/ic_bao_cao.png' %}" /> Báo cáo tổng quan
       </a>
-      <a class="menu-item active" href="#">
+
+      <a class="menu-item active" href="{% url 'forecast' %}">
         <img src="{% static 'web/img/ic_du_bao.png' %}" /> Dự báo nhu cầu
       </a>
+
       <a class="menu-item" href="{% url 'price' %}">
         <img src="{% static 'web/img/ic_gia.png' %}" /> Mô phỏng giá & khuyến mãi
       </a>
-      <a class="menu-item" href="#">
+
+      <a class="menu-item" href="{% url 'report' %}">
         <img src="{% static 'web/img/ic_quan_ly.png' %}" /> Quản lý báo cáo
       </a>
+
       <a class="menu-item" href="{% url 'logout' %}">
         <img src="{% static 'web/img/ic_dang_xuat.png' %}" /> Đăng xuất
       </a>
@@ -43,7 +44,8 @@
 
   <!-- MAIN -->
   <main class="main">
-    <!-- TOP BAR -->
+
+    <!-- TOPBAR -->
     <header class="topbar">
       <h1>DỰ BÁO NHU CẦU</h1>
       <div class="userbox">
@@ -52,97 +54,98 @@
       </div>
     </header>
 
-    <!-- FILTER BAR -->
+    <!-- FILTERS -->
     <section class="filters card">
       <div class="filters-left">
-
-        <!-- HÀNG 1: Khoảng dự báo -->
-        <div class="filter">
-          <label>Khoảng dự báo</label>
-          <select id="f-month-horizon">
-            <option value="1">1 tháng tới</option>
-            <option value="3" selected>3 tháng tới</option>
-            <option value="6">6 tháng tới</option>
-            <option value="12">12 tháng tới</option>
-          </select>
-        </div>
-
-        <!-- HÀNG 2: Sản phẩm - Khu vực - Mô hình -->
         <div class="filter-group">
+
           <div class="filter">
-            <label>Sản phẩm</label>
+            <label>Khoảng dự báo:</label>
+            <select id="f-month-horizon">
+              <option value="1">1 tháng tới</option>
+              <option value="3" selected>3 tháng tới</option>
+              <option value="6">6 tháng tới</option>
+              <option value="12">12 tháng tới</option>
+            </select>
+          </div>
+
+          <div class="filter">
+            <label>Sản phẩm:</label>
             <select id="f-product-id">
               <option value="ALL">Tất cả</option>
               {% for p in products %}
-                <option value="{{ p }}">{{ p }}</option>
+              <option value="{{ p }}">{{ p }}</option>
               {% endfor %}
             </select>
           </div>
 
           <div class="filter">
-            <label>Khu vực</label>
+            <label>Khu vực:</label>
             <select id="f-region">
               <option value="ALL">Toàn quốc</option>
               {% for r in regions %}
-                <option value="{{ r }}">{{ r }}</option>
+              <option value="{{ r }}">{{ r }}</option>
               {% endfor %}
             </select>
           </div>
 
           <div class="filter">
-            <label>Mô hình</label>
-            <select id="f-model">
-              {% for m in models %}
-                <option value="{{ m|lower }}">{{ m }}</option>
-              {% endfor %}
-            </select>
+            <label>Mô hình:</label>
+            <div class="model-box">
+              LightGBM v8 GridSearch – Best model
+            </div>
           </div>
+
         </div>
       </div>
 
-      <div class="filters-right">
-        <button id="btn-train" class="btn btn-green">
-          <i class="ri-cpu-line"></i> Huấn luyện mô hình
+      <!-- ACTION BAR -->
+      <div class="filter-actions">
+
+        <button id="btn-forecast"
+                class="btn btn-primary"
+                data-icon-loading="{% static 'web/img/hourglass.png' %}"
+                data-icon-default="{% static 'web/img/ic_du_bao.png' %}">
+          <img src="{% static 'web/img/ic_du_bao.png' %}" class="btn-icon">
+          Dự báo mới
         </button>
-        <button id="btn-forecast" class="btn btn-primary">
-          <i class="ri-magic-line"></i> Dự báo mới
-        </button>
+
         <button id="btn-export" class="btn btn-orange">
           <i class="ri-download-2-line"></i> Tải kết quả
         </button>
+
       </div>
     </section>
 
-<!-- KPI CARDS -->
-<section class="kpis">
-  <div class="kpi card">
-    <p>Doanh thu dự báo</p>
-    <h3 id="kpi-revenue">—</h3>
-    <span class="kpi-sub" id="kpi-revenue-sub">Tổng nhu cầu dự báo</span>
-  </div>
+    <!-- KPI -->
+    <section class="kpis">
+      <div class="kpi card">
+        <p>Doanh thu dự báo</p>
+        <h3 id="kpi-revenue">—</h3>
+        <span class="kpi-sub">Tổng nhu cầu dự báo</span>
+      </div>
 
-  <div class="kpi card">
-    <p>Sản lượng dự báo</p>
-    <h3 id="kpi-qty">—</h3>
-    <span class="kpi-sub" id="kpi-qty-sub">Đơn vị/tháng</span>
-  </div>
+      <div class="kpi card">
+        <p>Sản lượng dự báo</p>
+        <h3 id="kpi-qty">—</h3>
+        <span class="kpi-sub">Đơn vị/tháng</span>
+      </div>
 
-  <div class="kpi card">
-    <p>Sai số MAPE</p>
-    <h3 id="kpi-mape">—</h3>
-    <span class="kpi-sub" id="kpi-mape-sub">Càng thấp càng tốt</span>
-  </div>
+      <div class="kpi card">
+        <p>Sai số MAPE</p>
+        <h3 id="kpi-mape">—</h3>
+        <span class="kpi-sub">Càng thấp càng tốt</span>
+      </div>
 
-  <div class="kpi card">
-    <p>Top tăng mạnh nhất</p>
-    <h3 id="kpi-top">—</h3>
-    <span class="kpi-sub">
-      <i class="ri-arrow-up-s-line up" id="top-strongest-icon"></i>
-      <span id="top-strongest-trend">—</span>
-    </span>
-  </div>
-</section>
-
+      <div class="kpi card">
+        <p>Top tăng mạnh nhất</p>
+        <h3 id="kpi-top">—</h3>
+        <span class="kpi-sub">
+          <i class="ri-arrow-up-s-line up" id="top-strongest-icon"></i>
+          <span id="top-strongest-trend">—</span>
+        </span>
+      </div>
+    </section>
 
     <!-- MAIN CHART -->
     <section class="card big-chart">
@@ -156,26 +159,26 @@
         <div class="card-title">Cơ cấu nhu cầu theo khu vực</div>
         <canvas id="chart-region" height="150"></canvas>
       </div>
+
       <div class="card">
         <div class="card-title">Top sản phẩm tăng/giảm</div>
         <canvas id="chart-top" height="150"></canvas>
       </div>
     </section>
 
-    <!-- INSIGHT -->
-    <section class="grid-2">
-      <div class="card insights">
-        <div class="card-title">Phân tích & khuyến nghị</div>
-        <div id="insight">
-          Hệ thống đang sẵn sàng phân tích dữ liệu dự báo...
-        </div>
+    <!-- INSIGHT BLOCK -->
+    <section class="card insights">
+      <div class="card-title">Phân tích & khuyến nghị</div>
+      <div id="insight" style="padding: 14px;">
+        Hệ thống đang sẵn sàng phân tích dữ liệu dự báo...
       </div>
     </section>
+
   </main>
 </div>
-<!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- JS riêng của trang -->
-    <script src="{% static 'web/js/forecast.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'web/js/forecast.js' %}"></script>
+
 </body>
 </html>

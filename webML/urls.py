@@ -1,39 +1,9 @@
-"""
-URL configuration for webML project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
-from web import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.login_view, name='root'),
-    path('login/', views.login_view, name='login'),
-    path('home/', views.home, name='home'),
-    path('logout/', views.logout_view, name='logout'),
-    path('predict/', views.predict, name='predict'),
-    path('price/', views.price_view, name='price'),
-    path('report/', views.report_view, name='report'),
-    path("overview/", views.overview_view, name="overview"),
 
-    path("simulate_series/", views.simulate_series, name="simulate_series"),
-    path('api/reports', views.api_reports, name='api_reports'),
-    path('api/download_report/', views.download_report, name='download_report'),
-    path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
-    path('reports/redownload/<int:report_id>', views.api_redownload_report, name='api_redownload_report'),
-    path("api/overview/", views.api_overview, name="api_overview"),      # ✅ API lấy dữ liệu JSON
-    path("api/download_overview/", views.download_overview, name="download_overview"),
+    # DÙNG INCLUDE
+    path('', include('web.urls')),
 ]
