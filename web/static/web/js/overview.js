@@ -10,6 +10,7 @@ let chartRegion = null;
 let chartMain = null;
 let chartProductGroup = null;
 let chartTop5 = null;
+let lastOverviewData = null;
 
 // =======================================================
 // INIT
@@ -50,6 +51,7 @@ async function fetchOverview() {
 
         const payload = await res.json();
         if (!payload) throw new Error("Payload rỗng");
+        lastOverviewData = payload;
 
         const dataRows = payload.data || [];
         const timeObj = payload.time || { labels: [], revenue: [], profit: [] };
@@ -277,37 +279,62 @@ function renderTop5(top) {
 // =======================================================
 // EXPORT OVERVIEW (Không đổi, chỉ giữ nguyên icon riêng của export)
 // =======================================================
+// =======================================================
+// EXPORT OVERVIEW – DÙNG CHÍNH DỮ LIỆU ĐANG HIỂN THỊ
+// =======================================================
 async function downloadOverview() {
     try {
-        const region = $("#f-region")?.value || "ALL";
-        const product = $("#f-product")?.value || "ALL";
+        // 1. Không có dữ liệu thì báo
+        if (!lastOverviewData) {
+            alert("Chưa có dữ liệu để xuất. Hãy bấm Lọc trước.");
+            return;
+        }
 
+        const btn = $("#btn-export");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang tạo file...';
+        }
+
+        // 2. Gửi toàn bộ payload đang dùng ở UI
         const res = await fetch("/api/download_overview/", {
             method: "POST",
-            headers: { "Content-Type":"application/json" },
-            body: JSON.stringify({ region, product })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lastOverviewData)
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const disposition = res.headers.get('Content-Disposition');
-        let filename = 'Bao_cao_tong_quan.xlsx';
+        // 3. Lấy tên file từ header (nếu có)
+        const disposition = res.headers.get("Content-Disposition");
+        let filename = "Bao_cao_tong_quan.xlsx";
 
         if (disposition) {
-            const filenameMatch = disposition.match(/filename="(.+?)"/);
-            if (filenameMatch && filenameMatch[1]) filename = filenameMatch[1];
+            const match = disposition.match(/filename="(.+?)"/);
+            if (match && match[1]) {
+                filename = match[1];
+            }
         }
 
+        // 4. Tạo link download
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
+
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
         a.click();
+
         URL.revokeObjectURL(url);
 
     } catch (err) {
-        console.error("Lỗi tải báo cáo:", err);
+        console.error("Lỗi export:", err);
         alert("Không thể tải báo cáo!");
+    } finally {
+        const btn = $("#btn-export");
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ri-download-2-line"></i> Xuất báo cáo';
+        }
     }
 }

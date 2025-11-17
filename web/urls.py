@@ -23,7 +23,7 @@ urlpatterns = [
     # =======================
     # 3. REPORT APIs
     # =======================
-    path('api/reports', views.api_reports, name='api_reports'),
+    path('api/reports/', views.api_reports, name='api_reports'),
     path('api/download_report/', views.download_report, name='download_report'),
     path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
     # web/urls.py (Mục 3. REPORT APIs)

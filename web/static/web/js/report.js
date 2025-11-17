@@ -33,25 +33,24 @@ let filterState = {
 };
 
 // Dropdown options
-const TIME_OPTIONS = {
-    'all': 'Tất cả thời gian',
-    'today': 'Hôm nay',
-    '3_days': '3 ngày qua',
-    '7_days': '7 ngày qua',
-    '30_days': '30 ngày qua',
-    '90_days': '90 ngày qua',
-    '1_year': '1 năm qua',
-};
-
-const TYPE_OPTIONS = [
-    'all',
-    'Báo cáo tổng quan',
-    'Dự báo nhu cầu',
-    'Mô phỏng giá và khuyến mãi',
-    'Khuyến nghị'
+const TIME_OPTIONS = [
+    { value: "all",     label: "Tất cả thời gian" },
+    { value: "today",   label: "Hôm nay" },
+    { value: "7_days",  label: "7 ngày qua" },
+    { value: "30_days", label: "30 ngày qua" }
 ];
 
+const TYPE_OPTIONS = [
+    { value: "all", label: "Tất cả" },
+    { value: "Tổng quan vận hành", label: "Tổng quan vận hành" },
+    { value: "Mô phỏng giá và khuyến mãi", label: "Mô phỏng giá và khuyến mãi" },
+    { value: "Dự báo nhu cầu", label: "Dự báo nhu cầu" }
+];
+
+
 document.addEventListener("DOMContentLoaded", () => {
+    setupDropdowns();
+    attachFilterEvents();
     fetchReports();
 
     // Search live
@@ -64,9 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Dropdown filters
-    setupDropdowns();
-
     // Pagination click
     const paginationContainer = $("#pagination_container");
     if (paginationContainer) {
@@ -77,51 +73,68 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+
 // =======================================================
 // Setup dropdown filters
 // =======================================================
 function setupDropdowns() {
-    const timeFilter = document.querySelector('.dropdown-filter[data-filter="time"] select');
+    const timeFilter = document.querySelector("#filter-time");
+    const typeFilter = document.querySelector("#filter-type");
+    const creatorFilter = document.querySelector("#filter-creator");
+
+    // Clear trước
+    timeFilter.innerHTML = "";
+    typeFilter.innerHTML = "";
+
+    // Time options
+    TIME_OPTIONS.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+        timeFilter.appendChild(o);
+    });
+
+    // Type options
+    TYPE_OPTIONS.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+        typeFilter.appendChild(o);
+    });
+
+    // Creator giữ nguyên text input (không phải dropdown)
+}
+
+function attachFilterEvents() {
+    const timeFilter = document.querySelector("#filter-time");
+    const typeFilter = document.querySelector("#filter-type");
+    const creatorFilter = document.querySelector("#filter-creator");
+
     if (timeFilter) {
-        for (const key in TIME_OPTIONS) {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = TIME_OPTIONS[key];
-            timeFilter.appendChild(option);
-        }
-        timeFilter.value = filterState.time;
-        timeFilter.addEventListener('change', (e) => {
-            filterState.time = e.target.value;
+        timeFilter.addEventListener("change", () => {
+            filterState.time = timeFilter.value;
             filterState.page = 1;
             fetchReports();
         });
     }
 
-    const typeFilter = document.querySelector('.dropdown-filter[data-filter="type"] select');
     if (typeFilter) {
-        TYPE_OPTIONS.forEach(type => {
-            const option = document.createElement('option');
-            option.value = type;
-            option.textContent = type === 'all' ? 'Tất cả' : type;
-            typeFilter.appendChild(option);
-        });
-        typeFilter.value = filterState.type;
-        typeFilter.addEventListener('change', (e) => {
-            filterState.type = e.target.value;
+        typeFilter.addEventListener("change", () => {
+            filterState.type = typeFilter.value;
             filterState.page = 1;
             fetchReports();
         });
     }
 
-    const creatorFilter = document.querySelector('.dropdown-filter[data-filter="creator"] input');
     if (creatorFilter) {
-        creatorFilter.addEventListener('input', (e) => {
-            filterState.creator = e.target.value.trim();
+        creatorFilter.addEventListener("input", () => {
+            filterState.creator = creatorFilter.value.trim();
             filterState.page = 1;
             fetchReports();
         });
     }
 }
+
 
 // =======================================================
 // Fetch reports from backend

@@ -395,26 +395,19 @@ a { text-decoration: none; }
 }
 
 /* KHẮC PHỤC LỖI ĐÁNH SỐ LẶP */
-.top5-card {
-    padding:0;
-    overflow:hidden;
-    counter-reset: item;
-}
-#top5-list {
-    padding:12px;
-    color:var(--muted);
-    list-style: none;
-}
-#top5-list li {
-    list-style: none;
-    display: block;
+.top10-list {
+    margin-top: 12px;
+    padding: 10px 0;
 }
 
-#top5-list li::before {
-    counter-increment: item;
-    content: counter(item) ". ";
-    font-weight: 700;
-    color: var(--ink);
+.top10-list ol {
+    padding-left: 22px;
+    color: #64748B;
+    font-size: 14px;
+}
+
+.top10-list li {
+    margin-bottom: 4px;
 }
 
 /* ==================== RESPONSIVE (FIXED SIDEBAR COLLAPSE) ==================== */

@@ -318,6 +318,8 @@ a{text-decoration: none;}
 .chart-body{
   background:#F7F7F8;
   border-radius:10px;
+  width: 100%;
+  overflow: hidden;
 }
 
 #chart_growth{ margin-top:0; }
