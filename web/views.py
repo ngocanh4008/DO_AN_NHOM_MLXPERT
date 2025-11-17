@@ -29,6 +29,9 @@ import traceback
 from datetime import datetime
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponse
+from .models import ReportDownloadHistory
+from django.utils import timezone
+from datetime import timedelta
 
 
 def login_view(request):
@@ -50,12 +53,12 @@ def login_view(request):
         else:
             messages.error(request, "Sai tài khoản hoặc mật khẩu.")
 
-    return render(request, 'web/login.html')  # ✅ template đúng thư mục
+    return render(request, 'web/login.html')
 
 
 @login_required(login_url='login')
 def home(request):
-    return render(request, 'web/home.html')
+    return redirect('overview')
 
 
 def logout_view(request):
@@ -63,14 +66,12 @@ def logout_view(request):
     return redirect('login')
 
 
-# ================== MODEL LOAD ==================
+# Load model
 BASE_DIR = Path(__file__).resolve().parent.parent
-# 👉 dùng model v8 holiday soft (đặt file đúng thư mục dự án)
-MODEL_PATH = BASE_DIR / "web" / "ml_model" / "xgboost_model_v8_holidaysoft_grid.pkl"
+MODEL_PATH = BASE_DIR / "web" / "ml_model" / "lightgbm_v8_grid.pkl"
 model = joblib.load(MODEL_PATH)
 
 
-# ================== DB Helper ==================
 def q(sql):
     with connection.cursor() as cur:
         cur.execute("SET NAMES utf8mb4;")
@@ -78,7 +79,7 @@ def q(sql):
         return cur.fetchall()
 
 
-# ================== PAGE ==================
+# PAGE
 @login_required(login_url='login')
 def price_view(request):
     rows = q("SELECT variable_name, original_value, encoded_value FROM mapping")
@@ -104,7 +105,7 @@ def price_view(request):
     for var, original, encoded in rows:
         mapping.setdefault(var, []).append({"id": int(encoded), "name": str(original)})
 
-    # 🔥 Lấy thông tin thời gian hiện tại
+    # Lấy thông tin thời gian hiện tại
     today = datetime.today()
     year, week_num, _ = today.isocalendar()
     start_of_week = today - timedelta(days=today.weekday())
@@ -122,7 +123,6 @@ def price_view(request):
     return render(request, "web/price.html", ctx)
 
 
-# ================== FEATURE ORDER (V8) ==================
 FEATURES_V8 = [
     # Region (7)
     "region_KVCA", "region_KVMB", "region_KVMT", "region_KVMTR", "region_KVTN", "region_KVMN", "region_Khac",
@@ -135,10 +135,7 @@ FEATURES_V8 = [
     "holiday_flag_soft", "week_num"
 ]
 
-
-# ================== INTERNAL PREDICT (v8, chuẩn 22 feature) ==================
 def _predict_internal_v8(payload):
-    # ===== Inputs từ UI hoặc giá trị mặc định =====
     region_enc = int(payload.get("region_enc", 0))  # 0..6
     product_group_enc = int(payload.get("product_group_enc", 0))
     brand_name_enc = int(payload.get("brand_name_enc", 0))
@@ -146,13 +143,12 @@ def _predict_internal_v8(payload):
     discount_pct_ui = float(payload.get("discount_rate", 20.0))  # % từ UI
     promo_on = bool(payload.get("promo_on", True))
 
-    # ===== Derived =====
     cost_price = 0.70 * net_price
     margin = max(net_price - cost_price, 0.0)
     promo_flag = 1 if promo_on else 0
     discount_pct_ui = discount_pct_ui if promo_on else 0.0
 
-    # price_relative: baseline theo mốc 3e6 (xấp xỉ lúc train)
+    # price_relative
     baseline_price = 3_000_000
     price_relative = (net_price / baseline_price) if baseline_price > 0 else 1.0
 
@@ -162,31 +158,22 @@ def _predict_internal_v8(payload):
 
     # Tuần hiện tại
     week_num = date.today().isocalendar().week
-    # The code you provided is not valid Python code. It seems to be a mix of comments and
-    # a variable name "date" without any assignment or operation. If you have a specific
-    # question or need help with Python code, please provide more context or a complete
-    # code snippet.
-
-    # ===== Chuẩn hoá gần giống lúc train =====
-    # discount_rate lúc train là tỷ lệ 0..~0.5 → map % UI 0..50 về [0..1]
     discount_rate_n = max(0.0, min(discount_pct_ui, 50.0)) / 50.0
     net_price_n = min(net_price / 10_000_000.0, 1.0)
     margin_n = min(margin / 10_000_000.0, 1.0)
     price_rel_n = min(price_relative / 2.0, 1.0)
 
-    # ===== One-hot region (7) & urbanization (4 – tạm set 0) =====
     region_ohe = [0] * 7
     if 0 <= region_enc < 7:
         region_ohe[region_enc] = 1
-    urban_ohe = [0, 0, 0, 0]  # chưa nhập từ UI → 0
+    urban_ohe = [0, 0, 0, 0]
 
-    # price_group_enc gộp theo net_price nếu UI không gửi
+    # price_group_enc gộp theo net_price
     price_group_enc = int(payload.get(
         "price_group_enc",
         1 if net_price < 2_000_000 else (2 if net_price < 5_000_000 else 3)
     ))
 
-    # ===== Row chuẩn 22 cột, đúng thứ tự FEATURES_V8 =====
     row = {
         # region 7
         "region_KVCA": region_ohe[0], "region_KVMB": region_ohe[1], "region_KVMT": region_ohe[2],
@@ -218,7 +205,6 @@ def _predict_internal_v8(payload):
     return {"sold": sold, "revenue": revenue, "profit": profit}
 
 
-# ================== PREDICT (API) ==================
 @csrf_exempt
 @login_required(login_url='login')
 def predict(request):
@@ -226,12 +212,10 @@ def predict(request):
         return JsonResponse({"ok": False, "error": "POST required"}, status=405)
     try:
         payload = json.loads(request.body.decode("utf-8")) if request.body else {}
-
-        # chạy bằng internal để luôn đúng bộ 22 feature
         y = _predict_internal_v8(payload)
 
         net_price = float(payload.get("net_price", 4_000_000))
-        # discount % để gợi ý AI
+        # discount %
         discount_pct_ui = float(payload.get("discount_rate", 20.0))
         promo_on = bool(payload.get("promo_on", True))
         if not promo_on:
@@ -253,7 +237,7 @@ def predict(request):
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
 
-# ================== SIMULATE SERIES (cho biểu đồ) ==================
+#SIMULATE SERIES (cho biểu đồ)
 @csrf_exempt
 @login_required(login_url='login')
 def simulate_series(request):
@@ -273,7 +257,7 @@ def simulate_series(request):
         base_price = float(payload["net_price"])
 
         if mode == "price":
-            # quét ±30% giá theo bước 5%
+            # quét +-30% giá theo bước 5%
             for i in range(-6, 7):
                 p = base_price * (1 + i * 0.05)
                 temp = {**payload, "net_price": p}
@@ -288,7 +272,7 @@ def simulate_series(request):
                 series.append({"x": d, **y})
 
         elif mode == "region":
-            # quét 7 vùng, để m có thể gom sang pie chart phía front-end
+            # quét 7 vùng
             for r in range(7):
                 temp = {**payload, "region_enc": r}
                 y = _predict_internal_v8(temp)
@@ -308,7 +292,12 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
+
 def create_excel_content(payload, wb):
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.chart import LineChart, BarChart, Reference
+
+    # ===== DEFAULT =====
     payload.setdefault("region_enc", 0)
     payload.setdefault("product_group_enc", 0)
     payload.setdefault("brand_name_enc", 0)
@@ -316,123 +305,149 @@ def create_excel_content(payload, wb):
     payload.setdefault("discount_rate", 20.0)
     payload.setdefault("promo_on", True)
 
-    # ========== Vùng mô phỏng ==========
+    # ===== VÙNG MAPPING =====
+    region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
+
+    # ===== TẠO SERIES =====
     series_price = []
     series_discount = []
     series_region = []
 
-    # Giá bán ±30%
     base_price = float(payload["net_price"])
+
+    # --- PRICE ±30% ---
     for i in range(-6, 7):
         p = base_price * (1 + i * 0.05)
         y = _predict_internal_v8({**payload, "net_price": p})
         series_price.append({"x": p, **y})
 
-    # Khuyến mãi 0..50%
+    # --- DISCOUNT 0..50% ---
     for d in range(0, 55, 5):
         y = _predict_internal_v8({**payload, "discount_rate": d, "promo_on": True})
         series_discount.append({"x": d, **y})
 
-    # 7 vùng
+    # --- REGION 0..6 ---
     for r in range(7):
         y = _predict_internal_v8({**payload, "region_enc": r})
         series_region.append({"x": r, **y})
 
-    region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
-
-    # ======= Tìm điểm tối ưu =======
+    # ===== OPTIMIZATION =====
     best_price = max(series_price, key=lambda x: x["profit"])
-    best_discount = max(series_discount, key=lambda x: x["profit"])
+
+    # discount: ưu tiên lợi nhuận > nếu bằng nhau → ưu tiên discount thấp
+    best_discount = series_discount[0]
+    for cur in series_discount:
+        if cur["profit"] > best_discount["profit"]:
+            best_discount = cur
+        elif cur["profit"] == best_discount["profit"] and cur["x"] < best_discount["x"]:
+            best_discount = cur
+
     best_region = max(series_region, key=lambda x: x["profit"])
 
-    # ======= Tạo Excel =======
-    ws_sum = wb.active
-    ws_sum.title = "Summary"
-
-    # --- style cơ bản ---
+    # ===== BASE STYLES =====
     bold = Font(bold=True, size=12)
     header_fill = PatternFill("solid", fgColor="C5D9F1")
     thin = Side(border_style="thin", color="000000")
     border = Border(top=thin, left=thin, right=thin, bottom=thin)
     money_fmt = "#,##0₫"
 
-    # === 1️⃣ Sheet SUMMARY ===
+    # ===============================
+    # 1️⃣ SUMMARY SHEET
+    # ===============================
+    ws_sum = wb.active
+    ws_sum.title = "Summary"
+
     ws_sum.column_dimensions["A"].width = 40
-    ws_sum.column_dimensions["B"].width = 28
+    ws_sum.column_dimensions["B"].width = 30
 
     ws_sum.append(["HẠNG MỤC", "GIÁ TRỊ"])
-    for cell in ws_sum[1]:
-        cell.font = bold
-        cell.fill = header_fill
-        cell.border = border
-        cell.alignment = Alignment(horizontal="center")
+    for c in ws_sum[1]:
+        c.font = bold
+        c.fill = header_fill
+        c.border = border
+        c.alignment = Alignment(horizontal="center")
 
     summary_rows = [
-        ["Giá bán tối ưu (VND)", round(best_price["x"], 0)],
+        ["Giá bán tối ưu (VND)", round(best_price["x"])],
         ["Khuyến mãi tối ưu (%)", best_discount["x"]],
         ["Vùng lợi nhuận cao nhất", region_names[best_region["x"]]],
         ["Lợi nhuận tối đa (VND)", best_discount["profit"]],
         ["Doanh thu tối đa (VND)", best_discount["revenue"]],
-        ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]],
+        ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]]
     ]
-    for row in summary_rows:
-        ws_sum.append(row)
-        for c in ws_sum[ws_sum.max_row]:
-            c.border = border
-        if isinstance(row[1], (int, float)):
-            ws_sum.cell(ws_sum.max_row, 2).number_format = money_fmt
 
+    for label, value in summary_rows:
+        ws_sum.append([label, value])
+        row_idx = ws_sum.max_row
+
+        # style
+        ws_sum[f"A{row_idx}"].border = border
+        ws_sum[f"B{row_idx}"].border = border
+
+        # FORMAT THEO LOẠI
+        if "VND" in label:
+            ws_sum[f"B{row_idx}"].number_format = money_fmt
+        elif "(%)" in label:
+            ws_sum[f"B{row_idx}"].value = value / 100  # Excel % format = 0.05
+            ws_sum[f"B{row_idx}"].number_format = "0%"
+
+    # GỢI Ý AI
     ws_sum.append([])
     ws_sum.append([
-        "📈 Gợi ý AI",
-        f"Áp dụng giá {round(best_price['x'], 0):,.0f}đ, khuyến mãi {best_discount['x']}% tại {region_names[best_region['x']]} "
-        f"để đạt lợi nhuận tối đa {best_discount['profit']:,.0f}đ/tuần."])
-    ws_sum["A9"].font = Font(bold=True, color="0070C0")
-    ws_sum["B9"].font = Font(bold=True, color="0070C0")
-    ws_sum["B9"].alignment = Alignment(wrap_text=True)
+        "Gợi ý AI",
+        f"Áp dụng giá {round(best_price['x']):,}đ, giảm {best_discount['x']}% tại "
+        f"{region_names[best_region['x']]} đạt lợi nhuận {best_discount['profit']:,}đ/tuần."
+    ])
+    ws_sum["A" + str(ws_sum.max_row)].font = Font(bold=True, color="0070C0")
+    ws_sum["B" + str(ws_sum.max_row)].font = Font(bold=True, color="0070C0")
+    ws_sum["B" + str(ws_sum.max_row)].alignment = Alignment(wrap_text=True)
 
-    # === 2️⃣ PRICE SIMULATION ===
+    # ===============================
+    # 2️⃣ PRICE SIMULATION SHEET
+    # ===============================
     ws1 = wb.create_sheet("Price Simulation")
     ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
     for c in ws1[1]:
         c.font = bold
         c.fill = header_fill
         c.border = border
+
     for r in series_price:
-        ws1.append([round(r["x"], 0), r["sold"], r["revenue"], r["profit"]])
-    for row in ws1.iter_rows(min_row=2, max_col=4):
-        for c in row:
+        ws1.append([round(r["x"]), r["sold"], r["revenue"], r["profit"]])
+        for c in ws1[ws1.max_row]:
             c.border = border
             if c.col_idx >= 3:
                 c.number_format = money_fmt
 
-    chart1 = LineChart()
-    chart1.title = "Biến động Doanh thu & Lợi nhuận theo Giá bán"
-    chart1.y_axis.title = "Giá trị (VND)"
-    chart1.x_axis.title = "Giá bán (VND)"
+    chart = LineChart()
+    chart.title = "Biến động theo Giá bán"
+    chart.y_axis.title = "Giá trị (VND)"
+    chart.x_axis.title = "Giá bán (VND)"
     data = Reference(ws1, min_col=2, max_col=4, min_row=1, max_row=ws1.max_row)
     cats = Reference(ws1, min_col=1, min_row=2, max_row=ws1.max_row)
-    chart1.add_data(data, titles_from_data=True)
-    chart1.set_categories(cats)
-    ws1.add_chart(chart1, "G3")
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(cats)
+    ws1.add_chart(chart, "G3")
 
-    # === 3️⃣ DISCOUNT SIMULATION ===
+    # ===============================
+    # 3️⃣ DISCOUNT SIMULATION
+    # ===============================
     ws2 = wb.create_sheet("Discount Simulation")
-    ws2.append(["Mức giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
+    ws2.append(["Giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
     for c in ws2[1]:
         c.font = bold
         c.fill = header_fill
         c.border = border
+
     for r in series_discount:
         ws2.append([r["x"], r["sold"], r["revenue"], r["profit"]])
-    for row in ws2.iter_rows(min_row=2, max_col=4):
-        for c in row:
+        for c in ws2[ws2.max_row]:
             c.border = border
             if c.col_idx >= 3:
                 c.number_format = money_fmt
 
     chart2 = LineChart()
-    chart2.title = "Ảnh hưởng của Mức Khuyến mãi"
+    chart2.title = "Tác động của Mức khuyến mãi"
     chart2.y_axis.title = "Giá trị (VND)"
     chart2.x_axis.title = "Mức giảm giá (%)"
     data = Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=ws2.max_row)
@@ -441,291 +456,96 @@ def create_excel_content(payload, wb):
     chart2.set_categories(cats)
     ws2.add_chart(chart2, "G3")
 
-    # === 4️⃣ REGION SIMULATION ===
+    # ===============================
+    # 4️⃣ REGION SIMULATION
+    # ===============================
     ws3 = wb.create_sheet("Region Simulation")
     ws3.append(["Vùng", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
     for c in ws3[1]:
         c.font = bold
         c.fill = header_fill
         c.border = border
+
     for r in series_region:
         label = region_names[r["x"]] if 0 <= r["x"] < len(region_names) else "?"
         ws3.append([label, r["sold"], r["revenue"], r["profit"]])
-    for row in ws3.iter_rows(min_row=2, max_col=4):
-        for c in row:
+        for c in ws3[ws3.max_row]:
             c.border = border
             if c.col_idx >= 3:
                 c.number_format = money_fmt
 
     chart3 = BarChart()
     chart3.title = "So sánh Sản lượng theo Vùng"
-    chart3.y_axis.title = "Sản lượng (sp/tuần)"
     chart3.x_axis.title = "Vùng"
+    chart3.y_axis.title = "Sản lượng"
     data = Reference(ws3, min_col=2, max_col=2, min_row=1, max_row=ws3.max_row)
     cats = Reference(ws3, min_col=1, min_row=2, max_row=ws3.max_row)
     chart3.add_data(data, titles_from_data=True)
     chart3.set_categories(cats)
-    chart3.height = 10
-    chart3.width = 20
     ws3.add_chart(chart3, "G3")
-    pass
-
-@csrf_exempt
-@login_required(login_url='login')
-def download_report(request):
-    try:
-        payload = json.loads(request.body.decode("utf-8")) if request.body else {}
-        payload.setdefault("region_enc", 0)
-        payload.setdefault("product_group_enc", 0)
-        payload.setdefault("brand_name_enc", 0)
-        payload.setdefault("net_price", 4_000_000.0)
-        payload.setdefault("discount_rate", 20.0)
-        payload.setdefault("promo_on", True)
-        #KDU ĐIỀU CHỈNH HÀM
-        # # ========== Vùng mô phỏng ==========
-        # series_price = []
-        # series_discount = []
-        # series_region = []
-        #
-        # # Giá bán ±30%
-        # base_price = float(payload["net_price"])
-        # for i in range(-6, 7):
-        #     p = base_price * (1 + i * 0.05)
-        #     y = _predict_internal_v8({**payload, "net_price": p})
-        #     series_price.append({"x": p, **y})
-        #
-        # # Khuyến mãi 0..50%
-        # for d in range(0, 55, 5):
-        #     y = _predict_internal_v8({**payload, "discount_rate": d, "promo_on": True})
-        #     series_discount.append({"x": d, **y})
-        #
-        # # 7 vùng
-        # for r in range(7):
-        #     y = _predict_internal_v8({**payload, "region_enc": r})
-        #     series_region.append({"x": r, **y})
-        #
-        # region_names = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"]
-        #
-        # # ======= Tìm điểm tối ưu =======
-        # best_price = max(series_price, key=lambda x: x["profit"])
-        # best_discount = max(series_discount, key=lambda x: x["profit"])
-        # best_region = max(series_region, key=lambda x: x["profit"])
-        #
-        # # ======= Tạo Excel =======
-        # wb = openpyxl.Workbook()
-        # ws_sum = wb.active
-        # ws_sum.title = "Summary"
-        #
-        # # --- style cơ bản ---
-        # bold = Font(bold=True, size=12)
-        # header_fill = PatternFill("solid", fgColor="C5D9F1")
-        # thin = Side(border_style="thin", color="000000")
-        # border = Border(top=thin, left=thin, right=thin, bottom=thin)
-        # money_fmt = "#,##0₫"
-        #
-        # # === 1️⃣ Sheet SUMMARY ===
-        # ws_sum.column_dimensions["A"].width = 40
-        # ws_sum.column_dimensions["B"].width = 28
-        #
-        # ws_sum.append(["HẠNG MỤC", "GIÁ TRỊ"])
-        # for cell in ws_sum[1]:
-        #     cell.font = bold
-        #     cell.fill = header_fill
-        #     cell.border = border
-        #     cell.alignment = Alignment(horizontal="center")
-        #
-        # summary_rows = [
-        #     ["Giá bán tối ưu (VND)", round(best_price["x"], 0)],
-        #     ["Khuyến mãi tối ưu (%)", best_discount["x"]],
-        #     ["Vùng lợi nhuận cao nhất", region_names[best_region["x"]]],
-        #     ["Lợi nhuận tối đa (VND)", best_discount["profit"]],
-        #     ["Doanh thu tối đa (VND)", best_discount["revenue"]],
-        #     ["Sản lượng tối đa (sp/tuần)", best_discount["sold"]],
-        # ]
-        # for row in summary_rows:
-        #     ws_sum.append(row)
-        #     for c in ws_sum[ws_sum.max_row]:
-        #         c.border = border
-        #     if isinstance(row[1], (int, float)):
-        #         ws_sum.cell(ws_sum.max_row, 2).number_format = money_fmt
-        #
-        # ws_sum.append([])
-        # ws_sum.append([
-        #     "📈 Gợi ý AI",
-        #     f"Áp dụng giá {round(best_price['x'], 0):,.0f}đ, khuyến mãi {best_discount['x']}% tại {region_names[best_region['x']]} "
-        #     f"để đạt lợi nhuận tối đa {best_discount['profit']:,.0f}đ/tuần."
-        # ])
-        # ws_sum["A9"].font = Font(bold=True, color="0070C0")
-        # ws_sum["B9"].font = Font(bold=True, color="0070C0")
-        # ws_sum["B9"].alignment = Alignment(wrap_text=True)
-        #
-        # # === 2️⃣ PRICE SIMULATION ===
-        # ws1 = wb.create_sheet("Price Simulation")
-        # ws1.append(["Giá bán (VND)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        # for c in ws1[1]:
-        #     c.font = bold
-        #     c.fill = header_fill
-        #     c.border = border
-        # for r in series_price:
-        #     ws1.append([round(r["x"], 0), r["sold"], r["revenue"], r["profit"]])
-        # for row in ws1.iter_rows(min_row=2, max_col=4):
-        #     for c in row:
-        #         c.border = border
-        #         if c.col_idx >= 3:
-        #             c.number_format = money_fmt
-        #
-        # chart1 = LineChart()
-        # chart1.title = "Biến động Doanh thu & Lợi nhuận theo Giá bán"
-        # chart1.y_axis.title = "Giá trị (VND)"
-        # chart1.x_axis.title = "Giá bán (VND)"
-        # data = Reference(ws1, min_col=2, max_col=4, min_row=1, max_row=ws1.max_row)
-        # cats = Reference(ws1, min_col=1, min_row=2, max_row=ws1.max_row)
-        # chart1.add_data(data, titles_from_data=True)
-        # chart1.set_categories(cats)
-        # ws1.add_chart(chart1, "G3")
-        #
-        # # === 3️⃣ DISCOUNT SIMULATION ===
-        # ws2 = wb.create_sheet("Discount Simulation")
-        # ws2.append(["Mức giảm giá (%)", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        # for c in ws2[1]:
-        #     c.font = bold
-        #     c.fill = header_fill
-        #     c.border = border
-        # for r in series_discount:
-        #     ws2.append([r["x"], r["sold"], r["revenue"], r["profit"]])
-        # for row in ws2.iter_rows(min_row=2, max_col=4):
-        #     for c in row:
-        #         c.border = border
-        #         if c.col_idx >= 3:
-        #             c.number_format = money_fmt
-        #
-        # chart2 = LineChart()
-        # chart2.title = "Ảnh hưởng của Mức Khuyến mãi"
-        # chart2.y_axis.title = "Giá trị (VND)"
-        # chart2.x_axis.title = "Mức giảm giá (%)"
-        # data = Reference(ws2, min_col=2, max_col=4, min_row=1, max_row=ws2.max_row)
-        # cats = Reference(ws2, min_col=1, min_row=2, max_row=ws2.max_row)
-        # chart2.add_data(data, titles_from_data=True)
-        # chart2.set_categories(cats)
-        # ws2.add_chart(chart2, "G3")
-        #
-        # # === 4️⃣ REGION SIMULATION ===
-        # ws3 = wb.create_sheet("Region Simulation")
-        # ws3.append(["Vùng", "Sản lượng", "Doanh thu (VND)", "Lợi nhuận (VND)"])
-        # for c in ws3[1]:
-        #     c.font = bold
-        #     c.fill = header_fill
-        #     c.border = border
-        # for r in series_region:
-        #     label = region_names[r["x"]] if 0 <= r["x"] < len(region_names) else "?"
-        #     ws3.append([label, r["sold"], r["revenue"], r["profit"]])
-        # for row in ws3.iter_rows(min_row=2, max_col=4):
-        #     for c in row:
-        #         c.border = border
-        #         if c.col_idx >= 3:
-        #             c.number_format = money_fmt
-        #
-        # chart3 = BarChart()
-        # chart3.title = "So sánh Sản lượng theo Vùng"
-        # chart3.y_axis.title = "Sản lượng (sp/tuần)"
-        # chart3.x_axis.title = "Vùng"
-        # data = Reference(ws3, min_col=2, max_col=2, min_row=1, max_row=ws3.max_row)
-        # cats = Reference(ws3, min_col=1, min_row=2, max_row=ws3.max_row)
-        # chart3.add_data(data, titles_from_data=True)
-        # chart3.set_categories(cats)
-        # chart3.height = 10
-        # chart3.width = 20
-        # ws3.add_chart(chart3, "G3")
-        # ======= Tạo Excel =======
-        wb = openpyxl.Workbook()
-        create_excel_content(payload, wb)
-
-        # ====== Xuất file ======
-        today_str = datetime.today().strftime("%Y%m%d")
-
-        # Lưu workbook vào stream
-        stream = BytesIO()
-        wb.save(stream)
-        stream.seek(0)
-
-        # Tạo response xuất file Excel
-        response = HttpResponse(
-            stream.getvalue(),
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-        # Tên file có ngày động (chắc chắn thay đổi mỗi lần tải)
-        filename = f"BaoCaoGiaKhuyenMai_{today_str}.xlsx"
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-
-        #---KDU bổ sung---
-        file_size_kb = len(stream.getvalue()) / 1024
-        ReportDownloadHistory.objects.create(
-            user=request.user,
-            payload={
-                "type": "Mô phỏng giá và khuyến mãi",
-                "params": payload,
-            },
-            filename=filename,
-            file_size_kb=file_size_kb
-        )
-        #------
-
-        # Ghi log ra console để kiểm tra
-        print(f"[Download] Generated filename: {filename}")
-
-        return response
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
 
-# du bao
-# ==============================================================
-# 2️⃣  HÀM HỖ TRỢ LẤY DỮ LIỆU TỪ MySQL
-# ==============================================================
 @login_required(login_url='login')
 def forecast_view(request):
     """
-    Trang Dự báo nhu cầu: lấy danh sách sản phẩm và khu vực từ DB.
+    Trang Dự báo nhu cầu: lấy danh sách sản phẩm, khu vực, và TÊN GỐC CÁC MÔ HÌNH.
     """
     # ====== Lấy danh sách sản phẩm ======
-    with connection.cursor() as cur:
-        cur.execute("SET NAMES utf8mb4;")
-        cur.execute("""
-            SELECT DISTINCT product_group
-            FROM product
-            WHERE product_group IS NOT NULL
-            ORDER BY product_group
-        """)
-        products = [row[0] for row in cur.fetchall()]
+    try:
+        with connection.cursor() as cur:
+            cur.execute("SET NAMES utf8mb4;")
+            cur.execute("""
+                SELECT DISTINCT product_group
+                FROM product
+                WHERE product_group IS NOT NULL
+                ORDER BY product_group
+            """)
+            products = [row[0] for row in cur.fetchall()]
+    except Exception as e:
+        print(f"Lỗi truy vấn sản phẩm: {e}")
+        products = []
 
     # ====== Lấy danh sách khu vực ======
-    with connection.cursor() as cur:
-        cur.execute("""
-            SELECT original_value
-            FROM mapping
-            WHERE variable_name = 'region'
-            ORDER BY encoded_value
-        """)
-        regions = [row[0] for row in cur.fetchall()]
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT original_value
+                FROM mapping
+                WHERE variable_name = 'region'
+                ORDER BY encoded_value
+            """)
+            regions = [row[0] for row in cur.fetchall()]
+    except Exception as e:
+        print(f"Lỗi truy vấn khu vực: {e}")
+        regions = []
+
+    # Tim mo hinh
+    DEFAULT_MODEL = 'lightgbm_v8_grid'
+
+    try:
+        # Giả định: thư mục 'ml_model' nằm ngang hàng với thư mục 'web' chứa views.py
+        BASE_DIR = Path(__file__).resolve().parent
+        MODEL_DIR = BASE_DIR.parent / 'ml_model'
+
+        # Lấy danh sách tên gốc (stem) của file, không có .pkl
+        model_stems = [p.stem for p in MODEL_DIR.glob('*.pkl') if not p.name.startswith('.')]
+
+        # Xử lý trường hợp thư mục rỗng
+        if not model_stems:
+            model_stems = [DEFAULT_MODEL]
+
+    except Exception as e:
+        print(f"Lỗi khi quét thư mục mô hình: {e}")
+        model_stems = [DEFAULT_MODEL]
 
     ctx = {
         "products": products,
         "regions": regions,
-        "models": ["XGBoost", "Prophet", "Baseline"]  # ví dụ 3 mô hình
+        "models": model_stems  # Danh sách tên gốc (VD: ['ligth_gbm_v8_grid', 'model_b'])
     }
     return render(request, "web/forecast.html", ctx)
 
-
 def _fetch_sales_weekly(product_code: str, aggregate_by_month=True):
-    """
-    Truy xuất dữ liệu từ sales_weekly.
-    Nếu aggregate_by_month=True → gộp 4 tuần = 1 tháng.
-    Cho phép truyền product_group (VD: DEP) hoặc product_id cụ thể.
-    """
-    # =========================================================
-    # Nếu product_code = 'ALL' → lấy toàn bộ dữ liệu
-    # =========================================================
     if product_code.upper() == "ALL":
         base_sql = """
             SELECT week, SUM(sold_quantity) AS qty,
@@ -767,7 +587,7 @@ def _fetch_sales_weekly(product_code: str, aggregate_by_month=True):
             rows = [(int(w), float(q or 0), float(l1 or 0), float(r4 or 0), float(g or 0)) for (w, q, l1, r4, g) in
                     rows]
 
-    # Gộp dữ liệu theo tháng (mỗi 4 tuần)
+    # Gộp dữ liệu theo tháng
     if aggregate_by_month:
         months, actual_m, lag1_m, roll4_m, growth_m = [], [], [], [], []
         month_idx, temp = 1, []
@@ -809,15 +629,8 @@ def _fetch_sales_weekly(product_code: str, aggregate_by_month=True):
     return {"weeks": weeks, "actual": actual, "lag1": lag1, "roll4": roll4, "growth": growth}
 
 
-# ==============================================================
-# 3️⃣  HÀM MÔ HÌNH DỰ BÁO CƠ BẢN (SMA BASELINE)
-# ==============================================================
-
+# SMA Baseline
 def _sma_forecast(actual, lag1=None, roll4=None, horizon=6, alpha=0.6):
-    """
-    Dự báo cơ bản: dùng trung bình trượt và giá trị gần nhất.
-    Không cần thư viện ML nặng.
-    """
     n = len(actual)
     fitted = []
     for i in range(n):
@@ -827,7 +640,7 @@ def _sma_forecast(actual, lag1=None, roll4=None, horizon=6, alpha=0.6):
         pred = alpha * prev + (1 - alpha) * roll
         fitted.append(round(pred, 2))
 
-    # Dự báo tương lai (simple smoothing)
+    # Dự báo tương lai
     future = []
     last = fitted[-1] if fitted else actual[-1]
     last_roll = sum(actual[-4:]) / 4 if len(actual) >= 4 else actual[-1]
@@ -854,18 +667,11 @@ def _mape(y_true, y_pred):
         c += 1
     return round(100.0 * s / c, 2) if c > 0 else None
 
-
-# ==============================================================
 # API
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required(login_url='login')
 def api_forecast(request):
-    """
-    API dự báo nhu cầu theo horizon (1, 3, 6, 12 tháng tới)
-    + Cơ cấu nhu cầu theo khu vực (region)
-    + Top sản phẩm tăng/giảm trong nhóm được chọn
-    """
 
     try:
         # ======================================================
@@ -968,6 +774,7 @@ def api_forecast(request):
         top_changes = [round(float(r[3] or 0), 2) for r in rows_top]
 
         top_strongest = top_labels[0] if top_labels else None
+        top_strongest_change = top_changes[0] if top_changes else None
         trend = "tăng" if (top_changes and top_changes[0] > 0) else "giảm"
 
         # ======================================================
@@ -987,6 +794,7 @@ def api_forecast(request):
             "top_labels": top_labels,
             "top_changes": top_changes,
             "top_strongest": top_strongest,
+            "top_strongest_change": top_strongest_change,
             "trend": trend,
         })
 
@@ -1002,10 +810,9 @@ def report_view(request):
     context = {} # Bạn có thể thêm dữ liệu để truyền cho template ở đây
     return render(request, 'web/report.html', context)
 
-
 @api_view(['GET'])
 def api_reports(request):
-    # Lấy query params
+    # Query params
     search = request.GET.get('search', '').lower()
     report_type = request.GET.get('type', 'all')
     creator = request.GET.get('creator', '').lower()
@@ -1015,17 +822,32 @@ def api_reports(request):
 
     reports = ReportDownloadHistory.objects.all().select_related('user')
 
-    # Filter
+    # ============================
+    # 🔍 SEARCH (KHÔNG DÙNG Q)
+    # ============================
     if search:
-        reports = reports.filter(filename__icontains=search) | reports.filter(user__username__icontains=search)
+        qs1 = ReportDownloadHistory.objects.filter(filename__icontains=search)
+        qs2 = ReportDownloadHistory.objects.filter(user__username__icontains=search)
+        reports = qs1.union(qs2)  # OR logic
+
+    # ============================
+    # 📌 Filter loại báo cáo
+    # ============================
     if report_type != 'all':
         reports = reports.filter(payload__type=report_type)
+
+    # ============================
+    # 👤 Filter theo người tạo
+    # ============================
     if creator:
         reports = reports.filter(user__username__icontains=creator)
 
-    # Time filter
+    # ============================
+    # ⏳ Time filter
+    # ============================
     from datetime import datetime, timedelta
     now = datetime.now()
+
     if time_filter != 'all':
         delta = {
             'today': 0,
@@ -1035,19 +857,25 @@ def api_reports(request):
             '90_days': 90,
             '1_year': 365
         }.get(time_filter, 0)
-        if delta == 0:  # today
+
+        if delta == 0:
             reports = reports.filter(created_at__date=now.date())
         else:
             reports = reports.filter(created_at__gte=now - timedelta(days=delta))
 
-    # Pagination
+    # ============================
+    # 📄 Pagination
+    # ============================
     total = reports.count()
     total_pages = (total + page_size - 1) // page_size
     start = (page - 1) * page_size
     end = start + page_size
-    reports = reports[start:end]
 
-    # Response
+    reports = reports.order_by('-created_at')[start:end]
+
+    # ============================
+    # 📤 Response
+    # ============================
     data = []
     for r in reports:
         data.append({
@@ -1058,15 +886,34 @@ def api_reports(request):
             'date': r.created_at.strftime('%d/%m/%Y'),
             'size': f"{r.file_size_kb:.2f} KB"
         })
+
     return Response({
         'reports': data,
         'currentPage': page,
         'totalPages': total_pages
     })
-def download_history_view(request):
-    history = ReportDownloadHistory.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'reports/history.html', {'history': history})
 
+
+def download_history_view(request):
+    queryset = ReportDownloadHistory.objects.all().order_by('-created_at')
+    time_filter = request.GET.get("time", "all")
+
+    if time_filter != "all":
+        now = timezone.now()
+
+        if time_filter == "today":
+            queryset = queryset.filter(created_at__date=now.date())
+
+        elif time_filter == "7days":
+            queryset = queryset.filter(created_at__gte=now - timedelta(days=7))
+
+        elif time_filter == "30days":
+            queryset = queryset.filter(created_at__gte=now - timedelta(days=30))
+
+    # ĐỔ RA TEMPLATE DƯỚI TÊN "history"
+    return render(request, 'reports/history.html', {
+        'history': queryset
+    })
 @api_view(['DELETE'])
 @login_required(login_url='login')
 def api_delete_report(request, report_id):
@@ -1112,7 +959,7 @@ def api_redownload_report(request, report_id):
         return Response({"error": "Không tìm thấy báo cáo hoặc bạn không có quyền truy cập."}, status=404)
     except Exception as e:
         return Response({"error": f"Lỗi tái tạo báo cáo: {str(e)}"}, status=500)
-    
+
 
     # web/views.py
 # ==============================================================
@@ -1160,9 +1007,7 @@ def overview_view(request):
     return render(request, "web/overview.html", ctx)
 
 
-# ==============================================================
 # 2. API OVERVIEW
-# ==============================================================
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required(login_url='login')
@@ -1171,9 +1016,7 @@ def api_overview(request):
         region = (request.GET.get("region") or "ALL").strip()
         product = (request.GET.get("product") or "ALL").strip()
 
-        # ----------------------------------------------------------
         # MAIN TABLE (region x product_group)
-        # ----------------------------------------------------------
         with connection.cursor() as cur:
             cur.execute("SET NAMES utf8mb4;")
             sql = """
@@ -1218,9 +1061,7 @@ def api_overview(request):
                 "profit_pct": pct,
             })
 
-        # ----------------------------------------------------------
         # TIME SERIES (revenue + profit)
-        # ----------------------------------------------------------
         with connection.cursor() as cur:
             sql_time = """
                 SELECT year_num, month_num,
@@ -1270,16 +1111,21 @@ def api_overview(request):
                 SELECT p.product_id, SUM(s.revenue) AS total_rev
                 FROM sales s
                 LEFT JOIN product p ON s.product_id = p.product_id
-                WHERE (%s = 'ALL' OR p.product_group = %s)
+                WHERE p.product_id IS NOT NULL
+                AND (%s = 'ALL' OR p.product_group = %s)
                 GROUP BY p.product_id
+                HAVING SUM(s.revenue) > 0
                 ORDER BY total_rev DESC
-                LIMIT 5
+            LIMIT 5;
             """
             cur.execute(sql_top, [product, product])
             top_rows = cur.fetchall()
 
-        top_labels = [r[0] for r in top_rows]
-        top_values = [_to_float(r[1]) for r in top_rows]
+        clean_rows = [(pid, _to_float(rev)) for pid, rev in top_rows if pid not in (None, "", "—")]
+
+        # Nếu ít hơn 5 thì thôi, KHÔNG bù "—"
+        top_labels = [r[0] for r in clean_rows]
+        top_values = [r[1] for r in clean_rows]
 
         # ----------------------------------------------------------
         # KPIs
@@ -1316,56 +1162,273 @@ def api_overview(request):
         })
 
     except Exception as e:
-        print("❌ Lỗi API OVERVIEW:\n", traceback.format_exc())
+        print("Lỗi API OVERVIEW:\n", traceback.format_exc())
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
 
-# ==============================================================
-# 3. DOWNLOAD OVERVIEW
-# ==============================================================
+# web/views.py
+
+# ... (các hàm khác)
+
+# =======================
+# 4. OVERVIEW APIs
+# =======================
 @csrf_exempt
 @login_required(login_url='login')
 def download_overview(request):
     try:
+        import openpyxl
+        from openpyxl.styles import Font
+        from openpyxl.chart import LineChart, Reference, BarChart
+        from io import BytesIO
+        import json
+        from datetime import datetime
+
         payload = json.loads(request.body.decode("utf-8")) if request.body else {}
-        product = (payload.get("product") or "ALL").strip()
-        region = (payload.get("region") or "ALL").strip()
 
-        with connection.cursor() as cur:
-            cur.execute("SET NAMES utf8mb4;")
-            cur.execute("""
-                SELECT COALESCE(m.original_value,'Unknown'),
-                       COALESCE(p.product_group,'Unknown'),
-                       SUM(s.revenue),
-                       SUM(s.profit)
-                FROM sales s
-                LEFT JOIN product p ON s.product_id = p.product_id
-                LEFT JOIN mapping m
-                  ON m.encoded_value = s.distribution_channel_code_enc
-                 AND m.variable_name = 'region'
-                WHERE (%s='ALL' OR m.original_value=%s)
-                  AND (%s='ALL' OR p.product_group=%s)
-                GROUP BY COALESCE(m.original_value,'Unknown'),
-                         COALESCE(p.product_group,'Unknown')
-                ORDER BY SUM(s.revenue) DESC
-                LIMIT 500
-            """, [region, region, product, product])
-            rows = cur.fetchall()
+        # ===============================
+        # LẤY KPI TỪ PAYLOAD (UI) – KHÔNG TÍNH LẠI
+        # ===============================
+        kpis = payload.get("kpis", {}) or {}
 
-        # CSV
-        import io, csv
-        buf = io.StringIO()
-        wr = csv.writer(buf)
-        wr.writerow(["Region", "Product Group", "Revenue", "Profit"])
-        for r in rows:
-            wr.writerow([r[0], r[1], _to_float(r[2]), _to_float(r[3])])
-        csv_bytes = buf.getvalue().encode("utf-8-sig")
+        total_rev = float(kpis.get("revenue") or 0)
+        total_profit = float(kpis.get("profit") or 0)
+        total_cost = float(kpis.get("cost") or (total_rev - total_profit))
+        pct = float(kpis.get("profit_pct") or 0)
 
-        fname = f"overview_{datetime.now().strftime('%Y%m%d')}.csv"
-        resp = HttpResponse(csv_bytes, content_type="text/csv; charset=utf-8")
-        resp["Content-Disposition"] = f'attachment; filename="{fname}"'
-        return resp
+        # ===============================
+        # TIME SERIES (UI gửi lên rồi)
+        # ===============================
+        time_obj = payload.get("time", {}) or {}
+        labels = time_obj.get("labels", []) or []
+        revs = time_obj.get("revenue", []) or []
+        profs = time_obj.get("profit", []) or []
 
-    except Exception:
-        print("❌ Lỗi download_overview:\n", traceback.format_exc())
-        return JsonResponse({"ok": False}, status=500)
+        # ===============================
+        # TOP 5 PRODUCTS (UI)
+        # ===============================
+        top5 = payload.get("top5", {}) or {}
+        top_labels = top5.get("labels", []) or []
+        top_values = top5.get("values", []) or []
+
+        # ===============================
+        # TẠO EXCEL
+        # ===============================
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Tổng Quan"
+
+        bold = Font(bold=True, size=14)
+
+        # Header
+        timestamp_vi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ws["A1"] = f"BÁO CÁO TỔNG QUAN — Xuất lúc {timestamp_vi}"
+        ws["A1"].font = bold
+        ws.merge_cells("A1:E1")
+
+        # KPIs
+        ws.append([])
+        ws.append(["KPIs"])
+        ws["A3"].font = bold
+
+        ws.append(["Doanh thu", total_rev])
+        ws.append(["Chi phí", total_cost])
+        ws.append(["Lợi nhuận", total_profit])
+        ws.append(["Tỷ suất LN (%)", pct])
+
+        # TIME SERIES TABLE
+        ws.append([])
+        ws.append(["DỮ LIỆU THEO THÁNG"])
+        ws["A{}".format(ws.max_row)].font = bold
+        ws.append(["Thời điểm", "Doanh thu", "Lợi nhuận"])
+
+        for ym, rev, prof in zip(labels, revs, profs):
+            ws.append([ym, rev, prof])
+
+        # ===============================
+        # LINE CHART (Revenue & Profit)
+        # ===============================
+        chart = LineChart()
+        chart.title = "Doanh thu & Lợi nhuận theo tháng"
+        chart.style = 10
+        chart.y_axis.title = "Giá trị"
+        chart.x_axis.title = "Thời gian"
+
+        data_start = ws.max_row - len(labels)
+
+        data = Reference(ws, min_col=2, min_row=data_start, max_col=3, max_row=ws.max_row)
+        cats = Reference(ws, min_col=1, min_row=data_start + 1, max_row=ws.max_row)
+
+        chart.add_data(data, titles_from_data=True)
+        chart.set_categories(cats)
+
+        ws.add_chart(chart, "G5")
+
+        # ===============================
+        # TOP 5 TABLE
+        # ===============================
+        ws.append([])
+        ws.append(["TOP 5 SẢN PHẨM"])
+        ws["A{}".format(ws.max_row)].font = bold
+
+        ws.append(["Sản phẩm", "Doanh thu"])
+
+        for lab, val in zip(top_labels, top_values):
+            ws.append([lab, val])
+
+        # ===============================
+        # TOP 5 BAR CHART
+        # ===============================
+        chart2 = BarChart()
+        chart2.title = "Top 5 sản phẩm theo doanh thu"
+        chart2.y_axis.title = "Doanh thu"
+        chart2.x_axis.title = "Sản phẩm"
+
+        top_start = ws.max_row - len(top_labels)
+
+        data2 = Reference(ws, min_col=2, min_row=top_start, max_row=ws.max_row)
+        cats2 = Reference(ws, min_col=1, min_row=top_start+1, max_row=ws.max_row)
+
+        chart2.add_data(data2, titles_from_data=True)
+        chart2.set_categories(cats2)
+        chart2.shape = 4
+
+        ws.add_chart(chart2, "G25")
+
+        # ===============================
+        # EXPORT FILE
+        # ===============================
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        filename = f"Bao_cao_tong_quan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
+        return response
+
+    except Exception as e:
+        print("❌ Lỗi download_overview:", e)
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+
+# HÀM XUẤT FILE DỰ BÁO (cho /api/forecast/export/)
+@csrf_exempt
+@login_required(login_url='login')
+@require_http_methods(["POST"])
+def export_forecast(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        product_id = payload.get("product_id", "ALL")
+        horizon = int(payload.get("horizon", 3))
+        model_name = payload.get("model", "baseline").lower()
+
+        # 1. Lấy dữ liệu lịch sử
+        data_hist = _fetch_sales_weekly(product_id, aggregate_by_month=True)
+        actual = data_hist["actual"]
+        months_hist = data_hist["months"]
+
+        if not actual:
+            return JsonResponse({"ok": False, "error": "Không có dữ liệu lịch sử."}, status=400)
+
+        # 2. Chạy mô hình (baseline)
+        fitted, forecast = _sma_forecast(actual, horizon=horizon)
+
+        # 3. Tạo file Excel bằng openpyxl
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Dự báo nhu cầu"
+
+        ws.append(["Loại", "Tháng", "Sản lượng"])
+
+        for i, q in enumerate(actual):
+            month_label = f"T{months_hist[i]}" if i < len(months_hist) else f"T{i+1}"
+            ws.append(["Thực tế", month_label, round(q, 2)])
+
+        last_hist = months_hist[-1] if months_hist else 0
+        for i, q in enumerate(forecast):
+            month_label = f"T{last_hist + i + 1}"
+            ws.append(["Dự báo", month_label, round(q, 2)])
+
+        filename = f"Du_bao_Nhu_cau_{product_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+        file_stream = BytesIO()
+        wb.save(file_stream)
+        file_stream.seek(0)
+
+        response = HttpResponse(
+            file_stream.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # 5. Lưu lịch sử y như các loại báo cáo khác
+        try:
+            file_size_kb = round(len(file_stream.getvalue()) / 1024, 2)
+            params_data = {
+                "product_id": product_id,
+                "region": payload.get("region", "ALL"),
+                "model": model_name,
+                "horizon": horizon,
+            }
+            ReportDownloadHistory.objects.create(
+                user=request.user,
+                payload={
+                    "type": "Dự báo nhu cầu",
+                    "params": params_data,
+                },
+                filename=filename,
+                file_size_kb=file_size_kb,
+            )
+            print("[Forecast] Saved history OK")
+
+        except Exception as e:
+            print("❌ Lỗi lưu lịch sử forecast:", e)
+
+        return response
+
+    except Exception as e:
+        print("❌ Forecast Export Error:", e)
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@csrf_exempt
+@login_required(login_url='login')
+def download_report(request):
+    try:
+        import json
+        from datetime import datetime
+        from io import BytesIO
+        import openpyxl
+
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+
+        # tạo workbook
+        wb = openpyxl.Workbook()
+
+        # gọi hàm build nội dung
+        create_excel_content(payload, wb)
+
+        # output vào buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        # tên file chuẩn (YYYYMMDD_HHMMSS)
+        filename = f"Bao_cao_gia_khuyen_mai_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        print("❌ Lỗi download_report:", e)
+        return JsonResponse({"ok": False, "error": str(e)})
+

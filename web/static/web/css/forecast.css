@@ -1,16 +1,28 @@
+/* =================================== */
+/* GLOBAL VARIABLES & BASE STYLES      */
+/* =================================== */
 :root {
-  --bg: #f5f7fb;
+  /* Biến màu chính */
+  --blue:#01203F;     /* Nền Sidebar */
+  --orange:#FD7132;   /* Màu Active/Accent */
+  --gray:#D9D9D9;
+  --soft:#FFFDF2;
+  --text:#01203F;     /* Màu text mặc định (Giả định là Ink) */
+  --radius:12px;
+  --gap:16px;
+  --shadow:0 6px 16px rgba(15, 23, 42, 0.08); /* Shadow Card chính (Giữ lại shadow mới) */
+  --shadow-old:0 2px 10px rgba(0,0,0,.06);
+
+  /* Bổ sung các biến khác */
+  --bg: #f5f7fb;      /* Nền chính */
   --white: #ffffff;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --brand: #0b5ed7;       /* xanh primary */
-  --accent: #ff7a00;      /* cam */
-  --green: #18a058;
-  --card: #ffffff;
-  --line: #e5e7eb;
-  --sidebar: #0c2942;     /* xanh đậm */
-  --sidebar-active: #102f4b;
-  --shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  --ink: #0f172a;     /* Màu chữ đậm */
+  --muted: #64748b;   /* Màu chữ phụ */
+  --brand: #0b5ed7;   /* Màu Primary */
+  --accent: #ff7a00;  /* Màu Accent/Orange */
+  --green: #18a058;   /* Màu Green cho KPI */
+  --card: #ffffff;    /* Nền Card */
+  --line: #e5e7eb;    /* Đường kẻ */
 }
 
 /* RESET */
@@ -22,84 +34,151 @@ body {
   color: var(--ink);
   background: var(--bg);
 }
+a { text-decoration: none; }
 
-/* ==================== LAYOUT ==================== */
+/* ==================== LAYOUT (FIXED 295px) ==================== */
 .layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 295px 1fr;
   min-height: 100vh;
 }
 
 /* ==================== SIDEBAR ==================== */
 .sidebar {
-  background: var(--sidebar);
-  color: #dbeafe;
+  background: var(--blue);
+  color: #fff;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 20px 16px;
+  gap: 20px;
 }
 
-.brand { padding: 8px 6px 16px; }
-.brand .logo {
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: 0.5px;
+/* LOGO CARD */
+.logo-card {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius);
+  margin: 100px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
-.brand .logo span { color: #7cc4ff; }
+.logo-card img {
+  max-width: 140px;
+  height: auto;
+  display: block;
+}
 
+/* MENU */
 .menu {
-  margin-top: 12px;
+  margin-top: 40px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 14px;
 }
+
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: #dbeafe;
+  gap: 12px;
+  padding: 6px 0;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
   text-decoration: none;
-  font-weight: 500;
-  transition: background 0.15s ease;
+  transition: 0.2s ease;
+  white-space: nowrap;
 }
+
+/* ICON (Dùng cho tag <img>) */
+.menu-item img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* HOVER & ACTIVE */
 .menu-item:hover,
 .menu-item.active {
-  background: var(--sidebar-active);
-  color: #fff;
+  color: var(--orange) !important;
+  background: transparent !important;
 }
-.menu i { font-size: 18px; }
-.logout { margin-top: auto; }
+.menu-item.active {
+  font-weight: 700;
+}
 
-/* ==================== MAIN ==================== */
+
+/* LOGOUT */
+.logout {
+  margin-top: auto;
+}
+
+/* ======================================= */
+/* MAIN CONTENT & TOPBAR */
+/* ======================================= */
+
+/* Main Content Area */
 .main {
-  padding: 20px 24px;
+  padding: 100px 24px 20px 24px;
   overflow-x: hidden;
+  min-width: 0;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
 }
 
-/* ==================== TOPBAR ==================== */
+/* Topbar */
 .topbar {
+  position: fixed;
+  top: 0;
+  left: 295px;
+  width: calc(100% - 295px);
+  z-index: 100;
+
+  background: var(--ink);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  align-items: center;
+  height: 60px;
+  padding: 0 24px;
 }
+
 .topbar h1 {
   margin: 0;
   font-size: 28px;
-  letter-spacing: 0.2px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
 }
+
+/* Userbox & Avatar */
 .userbox {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
+  color: white;
+}
+.userbox span {
+    color: white;
+    font-size: 14px;
 }
 .avatar {
   background: #e2e8f0;
   padding: 8px;
   border-radius: 50%;
+  font-size: 20px;
+  color: var(--ink);
 }
 
 /* ==================== CARDS, GRID ==================== */
@@ -108,6 +187,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 .card-title {
   padding: 14px 16px;
@@ -119,57 +199,109 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin: 14px 0;
+  min-width: 0;
 }
-.kpi { padding: 16px; }
-.kpi p { margin: 0; color: var(--muted); }
+.kpi {
+  padding: 16px;
+  min-width: 0;
+}
+/* ĐÃ CHỈNH SỬA: Thêm thuộc tính ngắt chữ cho H3 */
 .kpi h3 {
-  margin: 6px 0 4px 0;
-  font-size: 26px;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    font-size: 24px;
+    margin: 4px 0 6px 0;
 }
+.kpi p {
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--ink);
+  font-size: 14px;
+}
+/* ĐÃ CHỈNH SỬA: Thêm thuộc tính ngắt chữ cho sub-value */
 .kpi-sub {
   color: var(--muted);
   font-size: 13px;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 .up { color: var(--green); }
 
-/* ==================== FILTERS ==================== */
+/* ==================== FILTERS (ĐÃ SỬA) ==================== */
 .filters {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* Căn giữa theo chiều dọc */
   flex-wrap: wrap;
   padding: 16px 20px;
-  gap: 12px;
+  gap: 16px;
 }
 .filters-left {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center; /* Căn giữa theo chiều dọc */
+  gap: 18px;
 }
 .filter-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 18px;
 }
-.filter label {
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  display: block;
+.filter {
+    display: flex;
+    flex-direction: column;
 }
+
 .filter select {
-  min-width: 160px;
+  min-width: 200px;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: #fff;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:#fff;
+  height: 40px;      /* CHUẨN */
   font-size: 14px;
+  color: var(--ink);
 }
-.filters-right {
+
+.filter label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.model-box {
+    display: flex;
+    align-items: center;      /* Căn giữa theo chiều dọc */
+    justify-content: flex-start;
+
+    background: var(--green);
+    border: 1px solid var(--muted);
+    border-radius: 4px;
+
+    height: 40px;             /* CHUẨN bằng với <select> */
+    padding: 0 12px;
+
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+    line-height: 1;           /* KHÔNG bị đội chữ */
+}
+.model-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+}
+/* Action bar ở góc dưới bên phải của khối filter */
+.filter-actions {
+  width: 100%;
   display: flex;
-  gap: 10px;
-  align-items: center;
   justify-content: flex-end;
+  margin-top: 10px;
+  gap: 12px;
+  padding-right: 4px;
 }
 @media (max-width: 1000px) {
   .filters {
@@ -180,6 +312,15 @@ body {
 }
 
 /* ==================== BUTTONS ==================== */
+.btn-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-right: 8px;
+  vertical-align: middle;
+  display: inline-block;
+}
 .btn {
   display: inline-flex;
   align-items: center;
@@ -192,6 +333,19 @@ body {
   text-decoration: none;
   transition: all 0.15s ease;
 }
+
+.btn:disabled {
+  background-color: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
+
+.btn:disabled:hover {
+    opacity: 1;
+}
+
 .btn-primary { background: var(--brand); color: #fff; }
 .btn-orange { background: var(--accent); color: #fff; }
 .btn-green { background: var(--green); color: #fff; }
@@ -200,7 +354,7 @@ body {
 .btn:hover { opacity: 0.9; }
 .btn:active { transform: translateY(1px); }
 
-/* ==================== CHARTS ==================== */
+/* ==================== CHARTS (ĐÃ CẬP NHẬT INSIGHTS) ==================== */
 .big-chart {
   padding: 16px;
 }
@@ -216,9 +370,20 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-top: 14px;
+  margin-bottom: 2px;
+  min-width: 0;
 }
+
+/* KHỐI INSIGHTS MỚI: Chiếm 100% bề ngang và đồng bộ khoảng cách */
+.card.insights {
+    margin-top: 14px;
+    width: 100%;
+    min-height: 180px;
+    margin-bottom: 14px;
+}
+
 .insights {
-  padding: 14px;
+  padding: 16px;
   min-height: 180px;
 }
 .footer-actions {
@@ -229,16 +394,55 @@ body {
   padding: 14px;
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* KHẮC PHỤC LỖI ĐÁNH SỐ LẶP */
+.top10-list {
+    margin-top: 12px;
+    padding: 10px 0;
+}
+
+.top10-list ol {
+    padding-left: 22px;
+    color: #64748B;
+    font-size: 14px;
+}
+
+.top10-list li {
+    margin-bottom: 4px;
+}
+
+/* ==================== RESPONSIVE (FIXED SIDEBAR COLLAPSE) ==================== */
 @media (max-width: 1100px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .grid-2 { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
-  .layout { grid-template-columns: 78px 1fr; }
+  /* Sidebar thu gọn về 76px */
+  .layout { grid-template-columns: 76px 1fr; }
+
+  /* FIXED: Ẩn chữ và căn giữa icon */
+  .menu-item {
+    font-size: 0;
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  /* Đảm bảo icon (img) hiển thị và căn giữa */
+  .menu-item img {
+      margin: 0 auto;
+  }
+  /* Ẩn logo */
+  .logo-card {
+      display: none !important;
+  }
+
+  /* Đảm bảo Topbar cố định vẫn căn chỉnh đúng khi Sidebar thu gọn */
+  .topbar {
+    left: 76px;
+    width: calc(100% - 76px);
+  }
+
+  /* Các phần khác */
   .brand .logo { font-size: 18px; }
-  .menu-item { font-size: 0; justify-content: center; }
-  .menu-item i { font-size: 20px; }
   .filters { flex-direction: column; align-items: flex-start; }
   .filters-right { align-self: flex-end; }
   .big-chart canvas { height: 300px !important; }

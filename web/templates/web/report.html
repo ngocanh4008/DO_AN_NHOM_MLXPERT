@@ -2,9 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
-    <title>Quản Lý Báo Cáo - MLXPERT</title>
+    <title>Quản Lý Báo Cáo | MLXPERT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'web/css/report.css' %}" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
     <script>
         function Icon(name, size = 20, color = 'currentColor', stroke = 2) {
             const icons = {
@@ -30,7 +31,7 @@
                 <a class="menu-item" href="{% url 'overview' %}">
                   <img src="{% static 'web/img/ic_bao_cao.png' %}"/> Báo cáo tổng quan
                 </a>
-                <a class="menu-item" href="{% url 'overview' %}">
+                <a class="menu-item" href="{% url 'forecast' %}">
                   <img src="{% static 'web/img/ic_du_bao.png' %}"/> Dự báo nhu cầu
                 </a>
                 <a class="menu-item" href="{% url 'price' %}">
@@ -46,13 +47,12 @@
             </aside>
         <main class="main">
             <header class="topbar">
-                <div class="greeter">Xin chào Admin!</div>
-                <div class="profile-placeholder"></div>
-            </header>
-
-            <section class="header-block">
                 <h1>QUẢN LÝ BÁO CÁO</h1>
-            </section>
+                <div class="userbox">
+                    <span>Xin chào Admin!</span>
+                    <i class="ri-user-3-line avatar"></i>
+                </div>
+            </header>
 
             <section class="report-content">
                 <div class="search-container">
@@ -64,37 +64,39 @@
                     <div class="filters">
 
                         <div class="dropdown-filter" data-filter="time">
-                            <span>Thời gian</span>
-                            <select></select>
+                            <span>Thời gian:</span>
+                            <select id="filter-time"></select>
                         </div>
 
                         <div class="dropdown-filter" data-filter="type">
-                            <span>Loại</span>
-                            <select></select>
+                            <span>Loại:</span>
+                            <select id="filter-type"></select>
                         </div>
 
                         <div class="dropdown-filter" data-filter="creator">
-                            <span>Người tạo</span>
-                            <input type="text" placeholder="Nhập tên" id="creator_input" />
+                            <span>Người tạo:</span>
+                            <input type="text" placeholder="Nhập tên" id="filter-creator" />
                         </div>
                     </div>
                 </div>
 
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th class="stt-cell">STT</th>
-                            <th>Tên báo cáo</th>
-                            <th>Loại báo cáo</th>
-                            <th>Người tạo</th>
-                            <th>Ngày tạo</th>
-                            <th>Kích thước tệp</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody id="report_table_body">
-                        </tbody>
-                </table>
+                <div class="report-table-wrapper">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th class="stt-cell">STT</th>
+                                <th>Tên báo cáo</th>
+                                <th>Loại báo cáo</th>
+                                <th>Người tạo</th>
+                                <th>Ngày tạo</th>
+                                <th>Kích thước tệp</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report_table_body">
+                            </tbody>
+                    </table>
+                </div>
 
                 <div id="pagination_container" class="pagination"></div>
 

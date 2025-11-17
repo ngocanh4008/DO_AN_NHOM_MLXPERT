@@ -1,34 +1,43 @@
-from django.contrib import admin
 from django.urls import path
 from . import views
 
-# app_name được đặt nếu đây là file urls.py của một ứng dụng (app-level)
-# Nếu là file urls.py chính (project-level), bạn không cần dòng này.
-# app_name = 'core'
-
 urlpatterns = [
-    # ------------------------------------
-    # 1. AUTHENTICATION & CORE PAGES (CÁC TRANG CHỦ YẾU)
-    # ------------------------------------
-    path('', views.login_view, name='login'),  # Trang Đăng nhập (Mặc định)
-    path('home', views.home, name='home'),  # Trang chủ
-    path('price', views.price_view, name='price'),  # Trang giá/định giá
-    path('report/', views.report_view, name='report'),  # Trang báo cáo (Giao diện người dùng)
-    path('overview/', views.overview_view, name='overview'),  # Trang tổng quan
+    # =======================
+    # 1. MAIN PAGES
+    # =======================
+    path('', views.login_view, name='login'),
+    path('home/', views.home, name='home'),
+    path('logout/', views.logout_view, name='logout'),
 
-    # ------------------------------------
-    # 2. API ENDPOINTS (ĐIỂM CUỐI DỮ LIỆU)
-    # ------------------------------------
+    path('price/', views.price_view, name='price'),
+    path('forecast/', views.forecast_view, name='forecast'),
+    path('report/', views.report_view, name='report'),
+    path('overview/', views.overview_view, name='overview'),
 
-    # API List/Create
-    path('api/reports', views.api_reports, name='api_reports'),  # Lấy danh sách hoặc tạo báo cáo mới
-    path('api/download_report/', views.download_report, name='download_report'),  # Tải báo cáo
+    # =======================
+    # 2. PRICE SIMULATION APIs
+    # =======================
+    path('api/predict/', views.predict, name='api_predict'),             # 🔥 API dự đoán bán – CHÍNH
+    path('api/simulate_series/', views.simulate_series, name='simulate_series'),
 
-    # API Detail/Actions (sử dụng ID động)
-    path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),  # Xóa báo cáo
+    # =======================
+    # 3. REPORT APIs
+    # =======================
+    path('api/reports/', views.api_reports, name='api_reports'),
+    path('api/download_report/', views.download_report, name='download_report'),
+    path('api/reports/<int:report_id>', views.api_delete_report, name='api_delete_report'),
+    # web/urls.py (Mục 3. REPORT APIs)
     path('reports/redownload/<int:report_id>', views.api_redownload_report, name='api_redownload_report'),
-    # Tải lại báo cáo
 
-    # Thêm path cho Admin nếu đây là file urls.py chính của project
-    # path('admin/', admin.site.urls),
+    # =======================
+    # 4. OVERVIEW APIs
+    # =======================
+    path('api/overview/', views.api_overview, name='api_overview'),
+    path('api/download_overview/', views.download_overview, name='download_overview'),
+
+    # =======================
+    # 5. FORECAST APIs
+    # =======================
+    path('api/forecast/', views.api_forecast, name='api_forecast'),
+    path('api/forecast/export/', views.export_forecast, name='export_forecast'),
 ]
