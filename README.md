@@ -34,3 +34,4 @@ $env:DJANGO_SUPERUSER_PASSWORD="YourPass123"
 python manage.py createsuperuser --noinput
 
 **Server chạy tại: http://127.0.0.1:8000/**
+

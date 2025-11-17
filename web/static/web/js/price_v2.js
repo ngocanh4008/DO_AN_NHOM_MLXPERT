@@ -16,12 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
     await drawPriceChart();     // price chart
   });
 
-  // 🆕 Sự kiện tải xuống
+  //Sự kiện tải xuống
   $("#btn_download")?.addEventListener("click", downloadReport);
 });
 
 // =======================================================
-// 1️⃣ PREDICT + AI INSIGHT TEXT
+//PREDICT + AI INSIGHT TEXT
 // =======================================================
 async function runPredict() {
   const payload = {
@@ -41,7 +41,7 @@ async function runPredict() {
   });
   const data = await res.json();
   if (!data.ok) {
-    $("#ai_text").textContent = "⚠️ " + data.error;
+    $("#ai_text").textContent = "" + data.error;
     return;
   }
 
@@ -49,13 +49,13 @@ async function runPredict() {
   $("#kq_rev").textContent = data.predicted_revenue.toLocaleString("vi-VN");
   $("#kq_profit").textContent = data.predicted_profit.toLocaleString("vi-VN");
 
-  // ✅ Gợi ý thông minh sau khi có kết quả cơ bản
+  //Gợi ý thông minh sau khi có kết quả cơ bản
   const smartSuggestion = await getSmartSuggestion(payload);
   $("#ai_text").innerHTML = smartSuggestion;
 }
 
 // =======================================================
-// 2️⃣ AI SMART SUGGESTION (ĐỒNG BỘ VỚI EXCEL)
+//AI SMART SUGGESTION (ĐỒNG BỘ VỚI EXCEL)
 // =======================================================
 async function getSmartSuggestion(payload) {
   try {
@@ -96,7 +96,6 @@ async function getSmartSuggestion(payload) {
     });
     const regionData = await resRegion.json();
 
-    // ❗ GIỐNG HỆT PYTHON: first max theo profit
     const bestRegion = regionData.series.reduce((best, cur) => {
       if (cur.profit > best.profit) return cur;
       return best; // profit bằng => giữ vùng cũ
@@ -105,23 +104,21 @@ async function getSmartSuggestion(payload) {
     const regionLabels = ["KVCA", "KVMB", "KVMT", "KVMTR", "KVTN", "KVMN", "Khác"];
 
     return `
-    💡 <b>Đề xuất thông minh:</b><br>
-    • <b>Giá tối ưu:</b> ${bestPrice.x.toLocaleString("vi-VN")}đ<br>
-    • <b>Khuyến mãi tối ưu:</b> ${bestDisc.x}%<br>
-    • <b>Vùng lợi nhuận cao nhất:</b> ${regionLabels[bestRegion.x] || "Không xác định"}<br>
+    <b>Đề xuất thông minh:</b><br>
+    - <b>Giá tối ưu:</b> ${bestPrice.x.toLocaleString("vi-VN")}đ<br>
+    - <b>Khuyến mãi tối ưu:</b> ${bestDisc.x}%<br>
+    - <b>Vùng lợi nhuận cao nhất:</b> ${regionLabels[bestRegion.x] || "Không xác định"}<br>
     <hr>
-    📈 <b>Dự kiến đạt lợi nhuận:</b> ${Math.round(bestDisc.profit).toLocaleString("vi-VN")}đ/tuần<br>
-    🧩 <i>AI đề xuất kết hợp giá ${bestPrice.x.toLocaleString("vi-VN")}đ và khuyến mãi ${bestDisc.x}% tại ${regionLabels[bestRegion.x]}</i>.
+    <b>Dự kiến đạt lợi nhuận:</b> ${Math.round(bestDisc.profit).toLocaleString("vi-VN")}đ/tuần<br>
+     <i>Đề xuất kết hợp giá ${bestPrice.x.toLocaleString("vi-VN")}đ và khuyến mãi ${bestDisc.x}% tại ${regionLabels[bestRegion.x]}</i>.
     `;
   } catch (err) {
     console.error("SmartSuggestion error:", err);
-    return "⚠️ Không thể phân tích đề xuất thông minh.";
+    return "Không thể phân tích đề xuất thông minh.";
   }
 }
 
-// =======================================================
-// 3️⃣ BIỂU ĐỒ KHUYẾN MÃI – STACKED AREA CHART
-// =======================================================
+// BIỂU ĐỒ KHUYẾN MÃI – STACKED AREA CHART
 async function drawDiscountChart() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
@@ -196,7 +193,7 @@ async function drawDiscountChart() {
 }
 
 // =======================================================
-// 4️⃣ BIỂU ĐỒ VÙNG MIỀN – BAR (region)
+//BIỂU ĐỒ VÙNG MIỀN – BAR (region)
 // =======================================================
 async function drawRegionChart() {
   const payload = {
@@ -240,7 +237,7 @@ async function drawRegionChart() {
 }
 
 // =======================================================
-// 5️⃣ BIỂU ĐỒ BIẾN ĐỘNG GIÁ – LINE (price)
+//BIỂU ĐỒ BIẾN ĐỘNG GIÁ – LINE (price)
 // =======================================================
 async function drawPriceChart() {
   const payload = {
@@ -315,7 +312,7 @@ async function drawPriceChart() {
 }
 
 // =======================================================
-//  📥 DOWNLOAD REPORT
+//DOWNLOAD REPORT
 // =======================================================
 async function downloadReport() {
   const payload = {
