@@ -15,15 +15,7 @@ Nhấn nút Branch ở góc trên trái -> Chọn FIN_NONFILT -> Nhấn Code →
 
 ⚠️ Lưu ý: Không dùng nhánh main để chạy hệ thống vì đây không phải phiên bản final.
 
-**2. Cấu trúc thư mục chính**
-DO_AN_NHOM_MLXPERT/
-│── MODELS/           # Notebook & file train mô hình
-│── web/              # Django web app
-│── webML/            # API phục vụ mô hình ML
-│── manage.py         # Django entry point
-│── README.md         # File hướng dẫn
-
-**3. Cách chạy backend Django**
+**2. Cách chạy backend Django**
 1️. Tạo môi trường ảo
 python -m venv .venv
 .venv\Scripts\activate
