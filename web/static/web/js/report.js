@@ -1,6 +1,6 @@
-// =======================================================
+
 // REPORT MANAGEMENT DASHBOARD SCRIPT
-// =======================================================
+
 
 // Utility function
 const $ = (sel) => document.querySelector(sel);
@@ -74,9 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// =======================================================
+
 // Setup dropdown filters
-// =======================================================
+
 function setupDropdowns() {
     const timeFilter = document.querySelector("#filter-time");
     const typeFilter = document.querySelector("#filter-type");
@@ -101,8 +101,6 @@ function setupDropdowns() {
         o.textContent = opt.label;
         typeFilter.appendChild(o);
     });
-
-    // Creator giữ nguyên text input (không phải dropdown)
 }
 
 function attachFilterEvents() {
@@ -136,9 +134,9 @@ function attachFilterEvents() {
 }
 
 
-// =======================================================
+
 // Fetch reports from backend
-// =======================================================
+
 async function fetchReports() {
     const tableBody = $("#report_table_body");
     const paginationContainer = $("#pagination_container");
@@ -158,9 +156,9 @@ async function fetchReports() {
     }
 }
 
-// =======================================================
+
 // Render table
-// =======================================================
+
 function renderTable(reports, currentPage) {
     const tableBody = $("#report_table_body");
     const downloadIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
@@ -191,9 +189,9 @@ function renderTable(reports, currentPage) {
     });
 }
 
-// =======================================================
+
 // Pagination
-// =======================================================
+
 function handlePaginationClick(target) {
     const page = target.getAttribute('data-page');
     const totalPages = parseInt($("#pagination_container").getAttribute('data-total-pages') || 1);
