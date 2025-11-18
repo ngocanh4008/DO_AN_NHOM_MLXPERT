@@ -1,6 +1,6 @@
-// =======================================================
+
 // FORECAST DASHBOARD – DỰ BÁO NHU CẦU
-// =======================================================
+
 
 // Helper
 const fmtInt = (n) => (n ?? 0).toLocaleString("vi-VN");
@@ -14,9 +14,9 @@ Chart.defaults.plugins.tooltip.intersect = false;
 
 let chartForecast, chartRegion, chartTop;
 
-// =======================================================
+
 // INIT EVENTS
-// =======================================================
+
 document.addEventListener("DOMContentLoaded", () => {
   $("#btn-forecast")?.addEventListener("click", runForecast);
   $("#btn-train")?.addEventListener("click", trainModel);
@@ -25,9 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
   runForecast();
 });
 
-// =======================================================
+
 // FILTER GETTERS
-// =======================================================
+
 function getSelectedProductId() {
   const el = document.getElementById("f-product-id");
   if (!el) return "ALL";
@@ -52,9 +52,9 @@ function getHorizon() {
   return el ? parseInt(el.value) || 3 : 3;
 }
 
-// =======================================================
+
 // MAIN FORECAST
-// =======================================================
+
 async function runForecast() {
   const btn = $("#btn-forecast");
 
@@ -86,9 +86,9 @@ async function runForecast() {
     drawRegionChart(data.region_labels || [], data.region_data || []);
     drawTopChart(data.top_labels || [], data.top_changes || []);
 
-    // ============================
-    // TOP 10 — CHUẨN DỮ LIỆU
-    // ============================
+
+    // TOP 10
+
     const listData = (data.top_labels || []).map((label, idx) => ({
       product: label,
       value: (data.top_changes || [])[idx] ?? 0
@@ -160,7 +160,7 @@ async function exportResult() {
 
   } catch (e) {
     console.error("Export error:", e);
-    alert("❌ Lỗi khi tải kết quả dự báo.");
+    alert(" Lỗi khi tải kết quả dự báo.");
 
   } finally {
     $("#btn-export").disabled = false;
@@ -168,9 +168,9 @@ async function exportResult() {
   }
 }
 
-// =======================================================
+
 // KPI UPDATE
-// =======================================================
+
 function updateKPI(data) {
   const k = data.kpis || {};
 
@@ -190,9 +190,9 @@ function updateKPI(data) {
   elIcon.className = change >= 0 ? "ri-arrow-up-s-line up" : "ri-arrow-down-s-line down";
 }
 
-// =======================================================
+
 // MAIN CHART
-// =======================================================
+
 function drawForecastMain(data) {
   const labelsHist = (data.labels_hist || []).map(m => "Tháng " + m);
   const labelsFuture = (data.labels_future || []).map(m => "Tháng " + m);
@@ -240,9 +240,9 @@ function drawForecastMain(data) {
   });
 }
 
-// =======================================================
+
 // REGION CHART
-// =======================================================
+
 function drawRegionChart(labels, values) {
   const ctx = $("#chart-region")?.getContext("2d");
   if (!ctx) return;
@@ -264,9 +264,9 @@ function drawRegionChart(labels, values) {
   });
 }
 
-// =======================================================
+
 // TOP CHANGE BAR CHART
-// =======================================================
+
 function drawTopChart(labels, values) {
   const ctx = $("#chart-top")?.getContext("2d");
   if (!ctx) return;
@@ -291,9 +291,9 @@ function drawTopChart(labels, values) {
   });
 }
 
-// =======================================================
-// RENDER TOP 10 LIST (CHUẨN % VÀ ICON)
-// =======================================================
+
+// RENDER TOP 10 LIST 
+
 function renderTop10List(data) {
   const ol = $("#top10-ol");
   if (!ol) return;
@@ -317,9 +317,9 @@ function renderTop10List(data) {
   });
 }
 
-// =======================================================
+
 // INSIGHT GENERATOR
-// =======================================================
+
 function genInsight(data) {
   const k = data.kpis || {};
   const horizon = data.forecast?.length || 0;
