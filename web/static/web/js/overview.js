@@ -1,6 +1,5 @@
-// =======================================================
-// OVERVIEW DASHBOARD – FULL VERSION (PNG ICON FIXED)
-// =======================================================
+
+// OVERVIEW DASHBOARD
 
 const $ = (s) => document.querySelector(s);
 const fmt = (v) => (v == null ? "—" : Number(v).toLocaleString("vi-VN"));
@@ -12,9 +11,9 @@ let chartProductGroup = null;
 let chartTop5 = null;
 let lastOverviewData = null;
 
-// =======================================================
+
 // INIT
-// =======================================================
+
 document.addEventListener("DOMContentLoaded", () => {
     const btnFilter = $("#btn-filter");
     const btnExport = $("#btn-export");
@@ -25,9 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchOverview();
 });
 
-// =======================================================
-// FETCH OVERVIEW (CÓ ICON PNG LOADING)
-// =======================================================
+
+// FETCH OVERVIEW 
+
 async function fetchOverview() {
     const btnFilter = $("#btn-filter");
 
@@ -75,9 +74,9 @@ async function fetchOverview() {
     }
 }
 
-// =======================================================
+
 // UPDATE KPIs
-// =======================================================
+
 function updateKPIs(kpis) {
     $("#kpi-revenue").textContent = kpis?.revenue != null ? fmt(kpis.revenue) : "—";
     $("#kpi-cost").textContent = kpis?.cost != null ? fmt(kpis.cost) : "—";
@@ -85,9 +84,9 @@ function updateKPIs(kpis) {
     $("#kpi-profit-rate").textContent = kpis?.profit_pct != null ? kpis.profit_pct + "%" : "—";
 }
 
-// =======================================================
+
 // MAIN LINE CHART
-// =======================================================
+
 function renderMainTimeChart(timeObj) {
     const ctx = $("#chart-rev-profit")?.getContext("2d");
     if (!ctx) return;
@@ -128,9 +127,9 @@ function renderMainTimeChart(timeObj) {
     });
 }
 
-// =======================================================
+
 // REGION CHART
-// =======================================================
+
 function renderRegionChart(rows) {
     const ctx = $("#chart-region")?.getContext("2d");
     if (!ctx) return;
@@ -165,9 +164,9 @@ function renderRegionChart(rows) {
     });
 }
 
-// =======================================================
+
 // PRODUCT GROUP CHART
-// =======================================================
+
 function renderProductGroupChart(rows) {
     const ctx = $("#chart-product-group")?.getContext("2d");
     if (!ctx) return;
@@ -206,9 +205,9 @@ function renderProductGroupChart(rows) {
     });
 }
 
-// =======================================================
+
 // TOP 5 CHART + LIST
-// =======================================================
+
 function renderTop5(top) {
     const labelsRaw = top.labels || [];
     const valsRaw = top.values || [];
@@ -226,7 +225,7 @@ function renderTop5(top) {
     const topPairs = pairs.slice(0, 5);
 
     const ol = $("#top5-ol");
-    const note = $("#top5-note"); // element ghi chú (m thêm ID này vào HTML)
+    const note = $("#top5-note"); // element ghi chú 
 
     if (ol) {
         ol.innerHTML = "";
@@ -276,12 +275,11 @@ function renderTop5(top) {
 }
 
 
-// =======================================================
-// EXPORT OVERVIEW (Không đổi, chỉ giữ nguyên icon riêng của export)
-// =======================================================
-// =======================================================
+
+// EXPORT OVERVIEW 
+
 // EXPORT OVERVIEW – DÙNG CHÍNH DỮ LIỆU ĐANG HIỂN THỊ
-// =======================================================
+
 async function downloadOverview() {
     try {
         // 1. Không có dữ liệu thì báo
@@ -305,7 +303,7 @@ async function downloadOverview() {
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        // 3. Lấy tên file từ header (nếu có)
+        // 3. Lấy tên file từ header 
         const disposition = res.headers.get("Content-Disposition");
         let filename = "Bao_cao_tong_quan.xlsx";
 
