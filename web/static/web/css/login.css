@@ -1,4 +1,4 @@
-/* Đây là file css cho trang login, mỗi trang khác nhau sẽ có css khác nhau, nếu trang nào có giao diện tương tự thì mới tái sử dụng */
+
 /* ========== RESET ========== */
 * {
   margin: 0;
@@ -39,7 +39,7 @@ body {
   top: 20px;
   left: 25px;
 }
-/* các chỉ số về width, height,... có thể bật dev mode trên figma để lấy và cop vào */
+
 .login-left .logo img {
   width: 70px;
   height: 70px;
@@ -218,7 +218,7 @@ input:focus {
   }
 }
 /* ============================= */
-/* ALERT NHỎ GỌN TRONG FORM */
+
 /* ============================= */
 .alert-container {
   width: 100%;
