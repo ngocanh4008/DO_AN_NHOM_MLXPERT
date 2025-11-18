@@ -1,6 +1,6 @@
-// =======================================================
-// PRICE SIMULATION DASHBOARD – FINAL FIXED
-// =======================================================
+
+// PRICE SIMULATION DASHBOARD
+
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -20,9 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn_download")?.addEventListener("click", downloadReport);
 });
 
-// =======================================================
-//PREDICT + AI INSIGHT TEXT
-// =======================================================
+
+//PREDICT + INSIGHT TEXT
+
 async function runPredict() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
@@ -54,9 +54,9 @@ async function runPredict() {
   $("#ai_text").innerHTML = smartSuggestion;
 }
 
-// =======================================================
-//AI SMART SUGGESTION (ĐỒNG BỘ VỚI EXCEL)
-// =======================================================
+
+//SUGGESTION 
+
 async function getSmartSuggestion(payload) {
   try {
     // ---- A. Quét theo giá ----
@@ -67,7 +67,7 @@ async function getSmartSuggestion(payload) {
     });
     const priceData = await resPrice.json();
 
-    // giống Python: lấy phần tử đầu tiên có profit max
+    // lấy phần tử đầu tiên có profit max
     const bestPrice = priceData.series.reduce((best, cur) => {
       if (cur.profit > best.profit) return cur;
       return best; // profit bằng nhau => giữ thằng cũ (first max)
@@ -118,7 +118,7 @@ async function getSmartSuggestion(payload) {
   }
 }
 
-// BIỂU ĐỒ KHUYẾN MÃI – STACKED AREA CHART
+// BIỂU ĐỒ KHUYẾN MÃI 
 async function drawDiscountChart() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
@@ -192,9 +192,9 @@ async function drawDiscountChart() {
   });
 }
 
-// =======================================================
+
 //BIỂU ĐỒ VÙNG MIỀN – BAR (region)
-// =======================================================
+
 async function drawRegionChart() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
@@ -236,9 +236,9 @@ async function drawRegionChart() {
   );
 }
 
-// =======================================================
-//BIỂU ĐỒ BIẾN ĐỘNG GIÁ – LINE (price)
-// =======================================================
+
+//BIỂU ĐỒ BIẾN ĐỘNG GIÁ 
+
 async function drawPriceChart() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
@@ -311,9 +311,9 @@ async function drawPriceChart() {
   });
 }
 
-// =======================================================
+
 //DOWNLOAD REPORT
-// =======================================================
+
 async function downloadReport() {
   const payload = {
     product_group_enc: parseInt($("#product_group").value),
