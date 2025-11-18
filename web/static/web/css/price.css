@@ -3,24 +3,24 @@
 /* =================================== */
 :root{
   --blue:#01203F;
-  --orange:#FD7132;   /* Màu Sidebar Active */
+  --orange:#FD7132;   
   --gray:#D9D9D9;
   --soft:#FFFDF2;
-  --text:#01203F;     /* Màu text mặc định */
+  --text:#01203F;     
 
-  /* THÊM BIẾN MÀU CHUẨN */
+  /* THÊM BIẾN MÀU  */
   --ink: #0f172a;
   --muted: #64748b;
-  --brand: #0b5ed7;   /* Primary (Xanh dương) */
-  --accent: #ff7a00;  /* Orange (Nút Tải/Export/Accent) */
-  --green: #18a058;   /* Green (Nút Chạy/Run) */
-  --line: #e5e7eb;    /* Đường kẻ/Viền (cho Ghost button) */
+  --brand: #0b5ed7;   
+  --accent: #ff7a00;  
+  --green: #18a058;  
+  --line: #e5e7eb;    
   --bg: #f5f7fb;
   --card: #ffffff;
 
   --radius:12px;
   --gap:16px;
-  --shadow:0 6px 16px rgba(15, 23, 42, 0.08); /* Đã đổi shadow đẹp hơn */
+  --shadow:0 6px 16px rgba(15, 23, 42, 0.08); 
 }
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -apple-system, Arial, sans-serif; color:var(--text); background: var(--bg); }
@@ -100,9 +100,9 @@ html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -app
 }
 
 
-/* ======================================= */
+
 /* MAIN CONTENT & TOPBAR                 */
-/* ======================================= */
+
 
 /* Main Content Area */
 .main{
@@ -116,7 +116,7 @@ html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -app
 a{text-decoration: none;}
 
 
-/* ==================== TOPBAR (FIXED) ==================== */
+/* ==================== TOPBAR ==================== */
 .topbar {
   position: fixed;
   top: 0;
@@ -184,7 +184,7 @@ a{text-decoration: none;}
 .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; border: 1px solid var(--line); }
 .form-card{ background:var(--gray); }
 
-/* ĐÃ SỬA: H2 trong card form/result */
+
 .form-card h2, .result-card h2, .ai-card h2{
     margin:0 0 12px 0;
     font-size: 20px;
@@ -232,13 +232,13 @@ a{text-decoration: none;}
   text-decoration: none;
   transition: all 0.15s ease;
 }
-/* Style cho nút Tải xuống (Top Bar) */
+/* Style cho nút Tải xuống  */
 #btn_download {
     padding: 8px 14px;
     background: var(--accent);
     color: #fff;
 }
-/* Style cho nút Chạy mô phỏng (trong Form) */
+/* Style cho nút Chạy mô phỏng */
 #run_btn {
     margin-top: 20px;
     width: 100%;
@@ -266,7 +266,7 @@ a{text-decoration: none;}
 .btn:disabled:hover {
     opacity: 1;
 }
-/* ==================== END BUTTONS ==================== */
+
 
 
 /* ====== Chart Section ====== */
@@ -295,11 +295,10 @@ a{text-decoration: none;}
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  padding-bottom: 10px; /* Khoảng đệm dưới chữ */
-  border-bottom: 1px solid var(--line); /* Đường kẻ mờ */
-  margin-bottom: 14px; /* Tăng khoảng cách dưới đường kẻ */
-}
-/* ĐÃ SỬA: H3 trong chart header */
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+
 .chart-header h3{
     margin:0;
     font-size: 16px;
@@ -333,13 +332,13 @@ a{text-decoration: none;}
   /* Sidebar thu gọn */
   .layout{ grid-template-columns: 76px 1fr; }
 
-  /* Cập nhật Topbar fixed khi sidebar thu gọn */
+
   .topbar {
     left: 76px;
     width: calc(100% - 76px);
   }
 
-  /* Cập nhật Sidebar menu khi thu gọn */
+
   .menu-item{
     font-size: 0;
     justify-content: center;
