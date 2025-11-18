@@ -32,14 +32,14 @@ body {
 }
 a{text-decoration: none;}
 
-/* ====== LAYOUT - CẬP NHẬT KÍCH THƯỚC SIDEBAR CHUẨN (295px) ====== */
+/* ====== LAYOUT  ====== */
 .layout {
   display: grid;
   grid-template-columns: 295px 1fr;
   min-height: 100vh;
 }
 
-/* ====== SIDEBAR (Đã ổn định) ====== */
+/* ====== SIDEBAR ====== */
 /* ==================== SIDEBAR STYLES ==================== */
 .sidebar {
   background: var(--blue);
@@ -94,7 +94,7 @@ a{text-decoration: none;}
   white-space: nowrap;
 }
 
-/* ICON (Dùng cho tag <img>) */
+/* ICON  */
 .menu-item img {
     width: 20px;
     height: 20px;
@@ -118,12 +118,11 @@ a{text-decoration: none;}
 }
 
 /* ======================================= */
-/* MAIN CONTENT & TOPBAR (FIXED TOPBAR) */
+/* MAIN CONTENT & TOPBAR */
 /* ======================================= */
 
 /* Main Content Area */
 .main {
-  /* Thêm khoảng đệm trên cùng bằng chiều cao của Topbar (60px) */
   padding: 100px 24px 20px 24px;
   overflow-x: hidden;
   min-width: 0;
@@ -134,28 +133,27 @@ a{text-decoration: none;}
 
 /* Topbar (FIXED, CỐ ĐỊNH, CHỨA H1 VÀ USERBOX) */
 .topbar {
-  /* Cố định và căn chỉnh chính xác dưới Sidebar */
   position: fixed;
   top: 0;
   left: 295px;
-  width: calc(100% - 295px); /* 100% viewport - kích thước sidebar */
+  width: calc(100% - 295px); 
   z-index: 100;
 
-  background: var(--ink); /* MÀU NỀN XÁM NHẸ */
+  background: var(--ink); 
   border-bottom: 1px solid var(--line);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
-  /* Bố cục: Hiển thị H1 (trái) và Userbox (phải) */
+  
   display: flex;
-  justify-content: space-between; /* Đẩy hai bên (H1 và Userbox) */
+  justify-content: space-between; 
   align-items: center;
-  height: 60px; /* Chiều cao cố định */
-  padding: 0 24px; /* Padding ngang đồng bộ với nội dung .main */
+  height: 60px; 
+  padding: 0 24px; 
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 28px; /* Kích thước tiêu đề */
+  font-size: 28px; 
   font-weight: 700;
   color: white;
   text-transform: uppercase;
@@ -191,11 +189,11 @@ a{text-decoration: none;}
 
 .card-title {
   padding: 12px 14px;
-  font-weight: 700; /* IN ĐẬM TIÊU ĐỀ CARD */
+  font-weight: 700; 
   border-bottom: 1px solid var(--line);
 }
 
-/* ==================== FILTERS (Hoàn nguyên 2 cột và fix lỗi) ==================== */
+/* ==================== FILTERS ==================== */
 .filters {
     display:flex;
     justify-content: space-between;
@@ -212,7 +210,7 @@ a{text-decoration: none;}
     flex-wrap: wrap;
 }
 
-/* Tiêu đề bộ lọc (Sản phẩm, Khu vực,...) */
+/* Tiêu đề bộ lọc */
 .btn-icon {
   width: 20px;
   height: 20px;
@@ -224,7 +222,7 @@ a{text-decoration: none;}
 
 .filter label {
   display: block;
-  font-weight: 700; /* IN ĐẬM TIÊU ĐỀ BỘ LỌC */
+  font-weight: 700; 
   margin-bottom: 6px;
   color: var(--ink);
   font-size: 14px;
@@ -238,10 +236,10 @@ a{text-decoration: none;}
     flex-wrap:wrap;
 }
 
-/* KHỐI CHỨA CÁC NÚT (Lọc, Tải kết quả) */
+/* KHỐI CHỨA CÁC NÚT  */
 .filters-right {
     display: flex;
-    gap: 16px; /* KHẮC PHỤC LỖI SÁT QUÁ */
+    gap: 16px; 
     align-items: center;
     flex-wrap: wrap;
 }
@@ -255,7 +253,7 @@ a{text-decoration: none;}
     height: 40px;
 }
 
-/* KPI (IN ĐẬM TIÊU ĐỀ KPI) */
+/* KPI */
 .kpis {
   display:grid;
   grid-template-columns: repeat(4, 1fr);
@@ -275,9 +273,9 @@ a{text-decoration: none;}
   color: var(--muted);
   font-size: 13px;
 }
-/* Tiêu đề KPI (Tổng doanh thu, Tổng chi phí,...) */
+/* Tiêu đề KPI  */
 .kpi p {
-  font-weight: 700; /* IN ĐẬM TIÊU ĐỀ KPI */
+  font-weight: 700;
   margin: 0 0 4px 0;
   color: var(--ink);
   font-size: 14px;
@@ -319,21 +317,21 @@ a{text-decoration: none;}
 }
 
 .chart-card canvas {
-    padding: 10px !important;        /* tránh biểu đồ đụng sát biên */
+    padding: 10px !important;       
 }
 
 /* GRID PHỤ */
 .grid-subtop {
   display: grid;
-  grid-template-columns: 1fr 0.95fr; /* 48% - 52% */
+  grid-template-columns: 1fr 0.95fr; 
   gap: 14px;
   margin-bottom: 14px;
   min-width: 0;
 }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; min-width: 0; }
 
-/* KHẮC PHỤC LỖI ĐÁNH SỐ LẶP */
-/* ================= FIX TOP5 CARD ================= */
+
+
 .top5-card {
     padding: 14px;
     height: auto !important;
@@ -365,7 +363,7 @@ a{text-decoration: none;}
 }
 
 
-/* ==================== BUTTONS (ĐÃ ĐỒNG BỘ) ==================== */
+/* ==================== BUTTONS ==================== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -386,7 +384,7 @@ a{text-decoration: none;}
 .btn:hover { opacity: 0.9; }
 .btn:active { transform: translateY(1px); }
 
-/* Style cho nút Disabled (Chế độ Đang dự báo/thống kê...) */
+/* Style cho nút Disabled  */
 .btn:disabled {
   background-color: #cbd5e1 !important; /* Màu xám */
   color: #64748b !important; /* Màu chữ tối hơn */
@@ -395,12 +393,12 @@ a{text-decoration: none;}
   transform: none;
 }
 .btn:disabled:hover {
-    opacity: 1; /* Loại bỏ hiệu ứng hover */
+    opacity: 1;
 }
 
 
 /* =================================== */
-/* RESPONSIVE (TINH CHỈNH CUỐI CÙNG) */
+/* RESPONSIVE */
 /* =================================== */
 
 @media (max-width:1100px){
@@ -432,7 +430,7 @@ a{text-decoration: none;}
     box-sizing: border-box;
 }
 
-/* FIX CANVAS BỊ DÍNH MÉP */
+
 canvas {
     margin: 0 auto;
     padding: 10px !important;
