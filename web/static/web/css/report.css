@@ -3,31 +3,31 @@
 /* =================================== */
 :root{
   --blue:#01203F;
-  --orange:#FD7132;   /* Màu Sidebar Active */
+  --orange:#FD7132;   
   --gray:#D9D9D9;
   --soft:#FFFDF2;
-  --text:#01203F;     /* Màu text mặc định */
+  --text:#01203F;    
 
-  /* THÊM BIẾN MÀU CHUẨN */
-  --ink: #0f172a;     /* Topbar Dark */
+  /* THÊM BIẾN MÀU */
+  --ink: #0f172a;     
   --muted: #64748b;
-  --brand: #0b5ed7;   /* Primary (Xanh dương) */
-  --accent: #ff7a00;  /* Orange (Nút Tải/Export/Accent) */
-  --green: #18a058;   /* Green (Nút Chạy/Run) */
-  --line: #e5e7eb;    /* Đường kẻ/Viền */
-  --bg: #f5f7fb;      /* Main background */
-  --card: #ffffff;    /* Card background */
+  --brand: #0b5ed7;   
+  --accent: #ff7a00; 
+  --green: #18a058;   
+  --line: #e5e7eb;    
+  --bg: #f5f7fb;      
+  --card: #ffffff;    
 
   --radius:12px;
   --gap:16px;
-  --shadow:0 6px 16px rgba(15, 23, 42, 0.08); /* Shadow chuẩn */
+  --shadow:0 6px 16px rgba(15, 23, 42, 0.08); 
 }
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; height:100%; font-family: Inter, system-ui, -apple-system, Arial, sans-serif; color:var(--text); background: var(--bg); }
 a{text-decoration: none;}
 
 /* =================================== */
-/* LAYOUT & SIDEBAR (CHUẨN)            */
+/* LAYOUT & SIDEBAR */
 /* =================================== */
 
 /* Layout 2 cột */
@@ -83,7 +83,7 @@ a{text-decoration: none;}
   transition: 0.2s ease;
   white-space: nowrap;
 }
-/* ICON (Dùng cho tag <img>) */
+/* ICON */
 .menu-item img {
     width: 20px;
     height: 20px;
@@ -106,7 +106,7 @@ a{text-decoration: none;}
 
 
 /* ======================================= */
-/* MAIN CONTENT & TOPBAR (CHUẨN FIXED)   */
+/* MAIN CONTENT & TOPBAR    */
 /* ======================================= */
 
 /* Main Content Area */
@@ -122,7 +122,7 @@ a{text-decoration: none;}
 a{text-decoration: none;}
 
 
-/* ==================== TOPBAR (FIXED CHUẨN) ==================== */
+/* ==================== TOPBAR  ==================== */
 .topbar {
   position: fixed;
   top: 0;
@@ -130,12 +130,12 @@ a{text-decoration: none;}
   width: calc(100% - 295px);
   z-index: 100;
 
-  background: var(--ink); /* NỀN TỐI */
+  background: var(--ink); 
   border-bottom: 1px solid var(--line);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
   display: flex;
-  justify-content: space-between; /* Căn chỉnh hai bên */
+  justify-content: space-between; 
   align-items: center;
   height: 60px;
   padding: 0 24px;
@@ -168,25 +168,25 @@ a{text-decoration: none;}
   color: var(--ink);
 }
 
-/* Bỏ các header cũ */
+
 .header-block{ display: none; }
 .greeter{ display: none; }
 .profile-placeholder{ display: none; }
 
-/* ... (Các phần Header Info/Content cũ không dùng ở trang này) ... */
+
 
 
 /* ======================================= */
-/* REPORT & TABLE SPECIFIC STYLES (ĐÃ SỬA) */
+/* REPORT & TABLE SPECIFIC STYLES */
 /* ======================================= */
 .report-content{
-    padding:0; /* Đã có padding trên .main */
+    padding:0; 
 }
 /* Search container */
 .search-container{
     margin-bottom:30px;
     position:relative;
-    width:50%; /* CHUẨN: Kích thước ô tìm kiếm */
+    width:50%;
 }
 .search-container input{
   width:100%; padding:12px 12px 12px 40px; border:1px solid #ccc;
@@ -213,11 +213,9 @@ a{text-decoration: none;}
 /* Filters */
 .filters{
     display:flex;
-    gap:20px; /* CHUẨN: Khoảng cách giữa các filter */
+    gap:20px; 
 }
 .dropdown-filter{
-  /* Bỏ padding/border vì filter trong ảnh dùng label riêng */
-  /* Re-style để phù hợp với ảnh 3d2ee.png */
   display:flex;
   flex-direction: row;
   align-items:center;
@@ -248,7 +246,6 @@ a{text-decoration: none;}
 /* Table */
 .report-table-wrapper{
     overflow-x: auto;
-    /* Thêm border-radius và shadow cho wrapper để bao phủ toàn bộ bảng */
     border: 1px solid #c9c9c9;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -258,44 +255,39 @@ a{text-decoration: none;}
   width:100%;
   min-width:900px;
   border-collapse:collapse;
-  background: var(--card); /* Nền bảng mặc định là trắng */
+  background: var(--card); 
   border-radius:var(--radius);
   overflow:hidden;
 }
 
 /* Header */
 .report-table thead{
-    background: var(--bg); /* Nền header màu xám nhạt */
-    color: var(--muted); /* Màu chữ xám mờ */
-}
+    background: var(--bg); 
+    color: var(--muted); 
 
-/* Cells (Thêm border bottom chuẩn) */
+/* Cells */
 .report-table th, .report-table td{
     padding:15px;
     text-align:left;
-    border-bottom: 1px solid #ccc; /* Border dưới màu line chuẩn */
-}
+    border-bottom: 1px solid #ccc; 
 
-/* Thay đổi màu xen kẽ cho Body */
 .report-table tbody tr:nth-child(odd) {
-    background-color: var(--card); /* Hàng lẻ: Trắng */
-}
+    background-color: var(--card); 
 .report-table tbody tr:nth-child(even) {
-    background-color: var(--bg); /* Hàng chẵn: Xám nhạt (--bg) */
+    background-color: var(--bg); 
 }
 
-/* Loại bỏ border dưới cho hàng cuối cùng để bảng trông sạch hơn */
 .report-table tbody tr:last-child td {
     border-bottom: none;
 }
 
 /* Hover Effect */
 .report-table tbody tr:hover {
-    background-color: #e5e7eb; /* Màu xám đậm hơn một chút khi hover */
+    background-color: #e5e7eb;
     cursor: pointer;
 }
 
-/* Typography & Links (Áp dụng biến màu chuẩn) */
+/* Typography & Links  */
 .report-table th{
     font-size:14px;
     font-weight:700;
@@ -303,7 +295,7 @@ a{text-decoration: none;}
 }
 .report-table td{
     font-size:14px;
-    color: var(--ink); /* Màu chữ nội dung đen chuẩn */
+    color: var(--ink); 
 }
 .stt-cell{ width:30px; text-align:center; }
 .stt-circle{
@@ -314,7 +306,7 @@ a{text-decoration: none;}
 .stt-circle.active-stt{ background-color:#555; }
 
 .report-link{
-    color: var(--brand); /* Màu xanh chính cho link */
+    color: var(--brand); 
     font-weight:500;
     text-decoration:none;
     transition:color 0.2s;
@@ -341,11 +333,11 @@ a{text-decoration: none;}
 
 
 /* =================================== */
-/* RESPONSIVE (CHUẨN FIXED)            */
+/* RESPONSIVE           */
 /* =================================== */
 
 @media (max-width: 1200px){
-  /* ... (Giữ nguyên phần responsive report/content) ... */
+
   .search-container{ width: 70%; }
 }
 @media (max-width: 900px){
